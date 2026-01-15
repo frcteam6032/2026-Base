@@ -1,0 +1,113 @@
+package frc.robot;
+
+import java.util.function.BooleanSupplier;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+
+import frc.robot.Constants.OIConstants;
+import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.utils.MathUtils;
+import frc.robot.vision.Limelight;
+
+public class RobotContainer {
+    // Create the robot's subsystems
+    private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+    private final Limelight m_limelight = new Limelight();
+
+    // Create the driver controller
+    private final CommandXboxController m_driverController = new CommandXboxController(
+            OIConstants.kDriverControllerPort);
+    // Create operator controller
+    private final CommandXboxController m_operatorController = new CommandXboxController(
+            OIConstants.kOperatorControllerPort);
+
+    private SendableChooser<Command> autoChooser;
+
+    private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
+    private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
+    private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
+
+    private double getRotationSpeed() {
+        return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getRightX(), thetaLimiter,
+                m_driverController.getRightTriggerAxis()), OIConstants.kDriveDeadband);
+    }
+
+    private double getYSpeed() {
+        return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftX(), yLimiter,
+                m_driverController.getRightTriggerAxis()), OIConstants.kDriveDeadband);
+    }
+
+    private double getXSpeed() {
+        return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
+                m_driverController.getRightTriggerAxis()), OIConstants.kDriveDeadband);
+    }
+
+    public RobotContainer() {
+
+        SmartDashboard.putNumber("Auto Delay", 0.0);
+        configureNamedCommands();
+
+        // Configure the buttons & default commands
+        configureButtonBindings();
+
+        // Config buttons
+        initAutoChooser();
+
+    }
+
+    private int getIsRed() {
+        var alliance = DriverStation.getAlliance();
+
+        if (alliance.isPresent()) {
+            return alliance.get() == DriverStation.Alliance.Red ? -1 : 1;
+        }
+
+        return 1;
+    }
+
+    private void configureNamedCommands() {
+
+    }
+
+    private void initAutoChooser() {
+        autoChooser = AutoBuilder.buildAutoChooser();
+        SmartDashboard.putData("Auto Chooser", autoChooser);
+    }
+
+    /**
+     * DONT CHANGE THESE
+     */
+    private void configureButtonBindings() {
+
+        // Default drive command
+        m_robotDrive.setDefaultCommand(
+                new RunCommand(
+                        () -> m_robotDrive.joystickDrive(
+                                getXSpeed() * getIsRed(),
+                                getYSpeed() * getIsRed(),
+                                getRotationSpeed(),
+                                true),
+                        m_robotDrive));
+    }
+
+    // Get the selected auto command
+    public Command getAutonomousCommand() {
+        return autoChooser.getSelected();
+    }
+
+    public double getDelay() {
+        return SmartDashboard.getNumber("Auto Delay", 0);
+    }
+
+}
