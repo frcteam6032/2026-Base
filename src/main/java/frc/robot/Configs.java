@@ -3,6 +3,7 @@ package frc.robot;
 import com.revrobotics.spark.config.SparkMaxConfig;
 // FeedbackSensor got moved to import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.config.FeedForwardConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import frc.robot.Constants.ModuleConstants;
@@ -19,6 +20,8 @@ public final class Configs {
                     / ModuleConstants.kDrivingMotorReduction;
             double turningFactor = 2 * Math.PI;
             double drivingVelocityFeedForward = 1 / ModuleConstants.kDriveWheelFreeSpeedRps;
+            // TODO: get kS and such
+            FeedForwardConfig drivingFFConfig = new FeedForwardConfig().kV(drivingVelocityFeedForward);
 
             elevatorConfig
                     .idleMode(IdleMode.kBrake)
@@ -36,7 +39,7 @@ public final class Configs {
                     .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                     // These are example gains you may need to them for your own robot!
                     .pid(0.04, 0, 0)
-                    .velocityFF(drivingVelocityFeedForward)
+                    .apply(drivingFFConfig)
                     .outputRange(-1, 1);
 
             turningConfig

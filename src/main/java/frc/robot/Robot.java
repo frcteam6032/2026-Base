@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -11,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.SuppliedWaitCommand;
 import frc.robot.utils.DashboardStore;
+import frc.robot.utils.QFRCLib;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -38,14 +40,20 @@ public class Robot extends TimedRobot {
         // and set up helper functions
         m_robotContainer = new RobotContainer();
 
-        // Can speed up autons
+        CameraServer.startAutomaticCapture();
+
+        // Telemetry
+        FollowPathCommand.warmupCommand().schedule();
 
         // Update dashboard values every 100ms
         addPeriodic(() -> {
             DashboardStore.update();
         }, 0.1);
 
-        CameraServer.startAutomaticCapture();
+        // QDash stuff
+        QFRCLib.startWebServer();
+        QFRCLib.publishMatchTime(this);
+        QFRCLib.setErrorHistoryLength(10);
     }
 
     /**
@@ -68,6 +76,9 @@ public class Robot extends TimedRobot {
         // robot's periodic
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
+
+        // feed the limelight every cycle
+        m_robotContainer.feedLimelight();
     }
 
     /** This function is called once each time the robot enters Disabled mode. */

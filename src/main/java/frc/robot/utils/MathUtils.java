@@ -1,7 +1,5 @@
 package frc.robot.utils;
 
-import java.util.stream.DoubleStream;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 
 public class MathUtils {
@@ -16,7 +14,7 @@ public class MathUtils {
     public static double normalizeVector(double vector, double magnitude) {
         return vector / magnitude;
     }
-    
+
     public static double getMagnitudeVector(double x, double y) {
         return Math.sqrt(x * x + y * y);
     }
