@@ -155,39 +155,6 @@ public class DriveSubsystem extends SubsystemBase {
         setupDashboard();
     }
 
-    public double nearest60error() {
-        double currentAngle = getHeading();
-        double nearest60 = Math.round(currentAngle / 60) * 60;
-        return -currentAngle + nearest60;
-    }
-
-    public Command turnToNearest60Degrees() {
-
-        return Commands.run(() -> {
-            double error = nearest60error();
-
-            if (Math.abs(error) > 1) {
-                joystickDrive(0, 0, controller.calculate(error) / DriveConstants.kMaxAngularSpeed, true);
-            } else {
-                joystickDrive(0, 0, 0, true);
-            }
-        }, DriveSubsystem.this);
-    }
-
-    public Command turnToNext60() {
-        return Commands.run(() -> {
-            double currentAngle = getHeading();
-            double next60 = Math.ceil(currentAngle + 60 / 60) * 60;
-            double error = currentAngle - next60 + 60;
-
-            if (Math.abs(error) > 1) {
-                joystickDrive(0, 0, error * ROTATE_kP, true);
-            } else {
-                joystickDrive(0, 0, 0, true);
-            }
-        }, this);
-    }
-
     private void setupDashboard() {
         DashboardStore.add("X Velocity", () -> getChassisSpeeds().vxMetersPerSecond);
         DashboardStore.add("Y Velocity", () -> getChassisSpeeds().vyMetersPerSecond);

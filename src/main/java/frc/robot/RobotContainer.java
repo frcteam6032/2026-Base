@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.utils.GameData;
 import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
 
@@ -21,7 +22,7 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
-
+    private final GameData m_GameData = new GameData(DriverStation.getAlliance());
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.DRIVER_CONTROLLER);
@@ -61,16 +62,6 @@ public class RobotContainer {
         initAutoChooser();
     }
 
-    private int getIsRed() {
-        var alliance = DriverStation.getAlliance();
-
-        if (alliance.isPresent()) {
-            return alliance.get() == DriverStation.Alliance.Red ? -1 : 1;
-        }
-
-        return 1;
-    }
-
     // TODO
     private void configureNamedCommands() {
 
@@ -89,8 +80,8 @@ public class RobotContainer {
         m_robotDrive.setDefaultCommand(
                 new RunCommand(
                         () -> m_robotDrive.joystickDrive(
-                                getXSpeed() * getIsRed(),
-                                getYSpeed() * getIsRed(),
+                                getXSpeed() * m_GameData.shouldInvertControls(),
+                                getYSpeed() * m_GameData.shouldInvertControls(),
                                 getRotationSpeed(),
                                 true),
                         m_robotDrive));

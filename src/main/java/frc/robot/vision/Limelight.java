@@ -38,6 +38,7 @@ public class Limelight {
 
     /**
      * Get the X offset of the current target.
+     * 
      * @return The X offset in degrees.
      */
     public double getXOffset() {
@@ -46,6 +47,7 @@ public class Limelight {
 
     /**
      * Get the Y offset of the current target.
+     * 
      * @return The Y offset in degrees.
      */
     public double getYOffset() {
@@ -54,6 +56,7 @@ public class Limelight {
 
     /**
      * Get the ID of the currently targeted fiducial.
+     * 
      * @return The tag ID of the current fiducial target.
      */
     public double getFiducialID() {
@@ -62,6 +65,7 @@ public class Limelight {
 
     /**
      * Whether or not there is a valid target on screen.
+     * 
      * @return true if there is a valid target, false otherwise
      */
     public boolean targetValid() {
@@ -85,7 +89,9 @@ public class Limelight {
     /**
      * Sets the robot's orientation on the field.
      * Use this for MegaTag2. This must be called at least once per frame
-     * @param angle The {@link Rotation2d} representing the robot's orientation on the field.
+     * 
+     * @param angle The {@link Rotation2d} representing the robot's orientation on
+     *              the field.
      */
     public void setRobotOrientation(Rotation2d angle) {
         // robot_orientation_set is a double array with 6 entries
@@ -98,7 +104,9 @@ public class Limelight {
     /**
      * Sets the robot's orientation on the field.
      * Use this for MegaTag2. This must be called at least once per frame
-     * @param angle The angle in degrees representing the robot's orientation on the field.
+     * 
+     * @param angle The angle in degrees representing the robot's orientation on the
+     *              field.
      */
     public void setRobotOrientation(double angle) {
         setRobotOrientation(Rotation2d.fromDegrees(angle));
@@ -116,7 +124,8 @@ public class Limelight {
         // the distance to the target using the formula:
         // distance = (targetHeight - cameraHeight) / tan(cameraAngle + targetAngle)
         Optional<Pose3d> tagPose = m_layout.getTagPose((int) getFiducialID());
-        if (tagPose.isEmpty()) return -1;
+        if (tagPose.isEmpty())
+            return -1;
 
         // Z is height, positive is up (thank God)
         double targetHeightMeters = tagPose.get().getZ();
