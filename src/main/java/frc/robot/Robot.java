@@ -4,14 +4,18 @@
 
 package frc.robot;
 
+import java.util.Optional;
+
 import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.commands.SuppliedWaitCommand;
 import frc.robot.utils.DashboardStore;
+import frc.robot.utils.GameData;
 import frc.robot.utils.QFRCLib;
 
 /**
@@ -42,7 +46,7 @@ public class Robot extends TimedRobot {
 
         CameraServer.startAutomaticCapture();
 
-        // Telemetry
+        // speeds up autos a bit
         FollowPathCommand.warmupCommand().schedule();
 
         // Update dashboard values every 100ms
@@ -54,6 +58,15 @@ public class Robot extends TimedRobot {
         QFRCLib.startWebServer();
         QFRCLib.publishMatchTime(this);
         QFRCLib.setErrorHistoryLength(10);
+
+        // Feed alliance data to GameData every second
+        // be careful with this as it is somewhat expensive
+        addPeriodic(() -> {
+            Optional<DriverStation.Alliance> alliance = DriverStation.getAlliance();
+            if (alliance.isPresent()) {
+                GameData.Alliance = alliance.get();
+            }
+        }, 1.0);
     }
 
     /**

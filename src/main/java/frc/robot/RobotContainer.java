@@ -3,8 +3,6 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -22,7 +20,7 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
-    private final GameData m_GameData = new GameData(DriverStation.getAlliance());
+
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.DRIVER_CONTROLLER);
@@ -80,8 +78,8 @@ public class RobotContainer {
         m_robotDrive.setDefaultCommand(
                 new RunCommand(
                         () -> m_robotDrive.joystickDrive(
-                                getXSpeed() * m_GameData.shouldInvertControls(),
-                                getYSpeed() * m_GameData.shouldInvertControls(),
+                                getXSpeed() * GameData.shouldInvertControls(),
+                                getYSpeed() * GameData.shouldInvertControls(),
                                 getRotationSpeed(),
                                 true),
                         m_robotDrive));
