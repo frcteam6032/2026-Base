@@ -134,4 +134,14 @@ public class Limelight {
         return (targetHeightMeters - CAMERA_HEIGHT_METERS)
                 / Math.tan(Math.toRadians(CAMERA_ANGLE + targetAngle));
     }
+
+    /**
+     * Returns the 3D pose of the currently targeted fiducial, if available.
+     *
+     * @return Optional containing the Pose3d of the target tag, empty if no tag
+     *         pose is available.
+     */
+    public Optional<Pose3d> getFiducialPose3d() {
+        return m_layout.getTagPose((int) getFiducialID());
+    }
 }

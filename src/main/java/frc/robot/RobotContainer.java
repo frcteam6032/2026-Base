@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.InfeedSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.utils.GameData;
 import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
@@ -20,6 +22,8 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
+    private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
+    private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();    
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(

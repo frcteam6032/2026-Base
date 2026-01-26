@@ -53,6 +53,28 @@ public final class Constants {
         public static final boolean kGyroReversed = false;
     }
 
+    public static final class ShooterConstants {
+        public static final int SHOOTER_CAN_ID = -1;
+
+        public static final double SHOOTER_P = 0.0005;
+        public static final double SHOOTER_I = 0.0;
+        public static final double SHOOTER_D = 0.0;
+        public static final double SHOOTER_FF = 1.0 / 5676.0; // rough kV (1 / freeSpeedRpm)
+
+        public static final double SHOOTER_BASE_RPM = 2000.0;
+        public static final double SHOOTER_RPM_PER_METER = 1000.0;
+
+        public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
+    }
+
+    public static final class InfeedConstants {
+        public static final int INFEED_CAN_ID = -1;
+
+        public static final double INFEED_P = 0.001;
+        public static final double INFEED_I = 0.0;
+        public static final double INFEED_D = 0.0;
+    }
+
     public static final class ModuleConstants {
         // The MAXSwerve module can be configured with one of three pinion gears: 12T,
         // 13T, or 14T.
