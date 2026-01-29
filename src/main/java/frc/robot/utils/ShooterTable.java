@@ -13,48 +13,19 @@ public class ShooterTable {
     public static final class ShooterTableEntry {
         public double distanceMeters;
         public double angleDegrees;
-        public double beans;
-        public double heckyOffsetMeters;
 
-        public ShooterTableEntry(double distanceMeters, double angleDegrees, double beans,
-                double heckyOffsetMeters) {
+        public ShooterTableEntry(double distanceMeters, double angleDegrees) {
             this.distanceMeters = distanceMeters;
             this.angleDegrees = angleDegrees;
-            this.beans = beans;
-            this.heckyOffsetMeters = heckyOffsetMeters;
         }
 
         public ShooterTableEntry average(ShooterTableEntry other) {
             return new ShooterTableEntry((distanceMeters + other.distanceMeters) / 2.0,
-                    (angleDegrees + other.angleDegrees) / 2.0,
-                    (beans + other.beans) / 2.0,
-                    (heckyOffsetMeters + other.heckyOffsetMeters) / 2.0);
+                    (angleDegrees + other.angleDegrees) / 2.0);
         }
-
-        public ShooterTableEntry applyHeckyOffset() {
-            double rotationThreshold = 30.0;
-            double allianceZeroAngle = allianceIsBlue() ? 0 : 180;
-            if (heckinessSupplier != null
-                    && Math.abs(heckinessSupplier.get().getDegrees() - allianceZeroAngle) > rotationThreshold) {
-                distanceMeters += heckyOffsetMeters;
-            }
-
-            return this;
-        }
-    }
-
-
+   }
 
     private static ArrayList<ShooterTableEntry> shooterTable = new ArrayList<>();
-
-
-    private static Supplier<Rotation2d> heckinessSupplier;
-
-
-    private static boolean allianceIsBlue() {
-        var maybe = DriverStation.getAlliance();
-        return maybe != null ? (maybe.equals(DriverStation.Alliance.Blue)) : false;
-    }
 
     private static double feetToMeters(double feet) {
         return Units.inchesToMeters(feet * 12.0);
@@ -129,22 +100,9 @@ public class ShooterTable {
         double scaleFactor = (distanceMeters - closestLower.distanceMeters)
                 / (closestHigher.distanceMeters - closestLower.distanceMeters);
 
-        double calculatedBeans = scaleFactor * (closestHigher.beans - closestLower.beans) + closestLower.beans;
         double calculatedAngle = scaleFactor * (closestHigher.angleDegrees - closestLower.angleDegrees)
                 + closestLower.angleDegrees;
-        double calculatedHeckyOffset = closestLower.heckyOffsetMeters
-                + (closestHigher.heckyOffsetMeters - closestLower.heckyOffsetMeters) * scaleFactor;
 
-        return new ShooterTableEntry(distanceMeters, calculatedAngle, calculatedBeans, calculatedHeckyOffset);
-    }
-
-    public static void setHeckinessLevel(Supplier<Rotation2d> heckSource) {
-        heckinessSupplier = heckSource;
-    }
-
-    // API for adding/modifying entries programmatically
-    public static void addShooterEntry(ShooterTableEntry e) {
-        shooterTable.add(e);
-        shooterTable.sort((a, b) -> Double.compare(a.distanceMeters, b.distanceMeters));
+        return new ShooterTableEntry(distanceMeters, calculatedAngle);
     }
 }
