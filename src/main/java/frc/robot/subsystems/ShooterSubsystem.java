@@ -113,7 +113,7 @@ public class ShooterSubsystem extends SubsystemBase {
             double rpm = calculateWheelRPMForDistance(getPredictedDistanceMeters());
             m_shooter.setVelocityRPM(rpm);
         } else {
-            m_shooter.setPercent(entry.beans);
+            // m_shooter.setPercent(entry.beans);
         }
 
         return true;
