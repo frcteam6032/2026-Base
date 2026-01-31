@@ -75,6 +75,14 @@ public final class Constants {
         public static final double INFEED_D = 0.0;
     }
 
+    public static final class FeederConstants {
+        public static final int FEEDER_CAN_ID = -1;
+
+        public static final double INFEED_P = 0.001;
+        public static final double INFEED_I = 0.0;
+        public static final double INFEED_D = 0.0;
+    }
+
     public static final class ModuleConstants {
         // The MAXSwerve module can be configured with one of three pinion gears: 12T,
         // 13T, or 14T.

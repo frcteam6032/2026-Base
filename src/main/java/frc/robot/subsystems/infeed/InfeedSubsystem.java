@@ -1,19 +1,13 @@
-package frc.robot.subsystems;
-
-import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
+package frc.robot.subsystems.infeed;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
-import frc.robot.subsystems.motors.InfeedMotor;
-import frc.robot.subsystems.motors.InfeedSparkMAX;
 
 public class InfeedSubsystem {
     private final InfeedMotor m_infeed;
 
     public InfeedSubsystem() {
-        m_infeed = new InfeedSparkMAX(Constants.InfeedConstants.INFEED_CAN_ID);
+        m_infeed = new InfeedSparkMAX();
     }
 
     private void runPercent(double percent) {

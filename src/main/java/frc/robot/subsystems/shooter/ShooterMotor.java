@@ -1,4 +1,4 @@
-package frc.robot.subsystems.motors;
+package frc.robot.subsystems.shooter;
 
 public interface ShooterMotor {
     void setPercent(double percent);

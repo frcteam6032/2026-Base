@@ -1,4 +1,4 @@
-package frc.robot.subsystems.motors;
+package frc.robot.subsystems.shooter;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
@@ -12,8 +12,6 @@ import com.revrobotics.spark.config.FeedForwardConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.FeedbackSensor;
 
-import frc.robot.Constants;
-
 /**
  * Spark MAX implementation of {@link ShooterMotor} using the REV Spark wrapper
  * present in this project.
@@ -23,12 +21,19 @@ public class ShooterSparkMAX implements ShooterMotor {
     private final RelativeEncoder m_encoder;
     private final SparkClosedLoopController m_closedLoop;
 
+    private static final double kP = 0.0005;
+    private static final double kI = 0.0;
+    private static final double kD = 0.0;
+    private static final double kFF = 1.0 / 5676.0; // rough kV (1 / freeSpeedRpm)
+
+    public static final int MOTOR_ID = -1;
+
     @SuppressWarnings("removal")
-    public ShooterSparkMAX(int canId) {
-        m_motor = new SparkMax(canId, MotorType.kBrushless);
+    public ShooterSparkMAX() {
+        m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
 
         SparkMaxConfig cfg = new SparkMaxConfig();
-        FeedForwardConfig ff = new FeedForwardConfig().kV(Constants.ShooterConstants.SHOOTER_FF);
+        FeedForwardConfig ff = new FeedForwardConfig().kV(kFF);
 
         cfg.idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(40)
@@ -36,8 +41,7 @@ public class ShooterSparkMAX implements ShooterMotor {
 
         cfg.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(Constants.ShooterConstants.SHOOTER_P, Constants.ShooterConstants.SHOOTER_I,
-                        Constants.ShooterConstants.SHOOTER_D)
+                .pid(kP, kI, kD)
                 .apply(ff)
                 .outputRange(-1, 1);
 

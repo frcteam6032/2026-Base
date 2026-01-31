@@ -12,18 +12,18 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class ShooterTable {
     public static final class ShooterTableEntry {
         public double distanceMeters;
-        public double angleDegrees;
+        public double wheelRPM;
 
-        public ShooterTableEntry(double distanceMeters, double angleDegrees) {
+        public ShooterTableEntry(double distanceMeters, double wheelRPM) {
             this.distanceMeters = distanceMeters;
-            this.angleDegrees = angleDegrees;
+            this.wheelRPM = wheelRPM;
         }
 
         public ShooterTableEntry average(ShooterTableEntry other) {
             return new ShooterTableEntry((distanceMeters + other.distanceMeters) / 2.0,
-                    (angleDegrees + other.angleDegrees) / 2.0);
+                    (wheelRPM + other.wheelRPM) / 2.0);
         }
-   }
+    }
 
     private static ArrayList<ShooterTableEntry> shooterTable = new ArrayList<>();
 
@@ -72,7 +72,6 @@ public class ShooterTable {
         fillInTable();
     }
 
-
     public static ShooterTableEntry calcShooterTableEntry(double distanceMeters) {
         SmartDashboard.putNumber("Index_m", distanceMeters);
         ShooterTableEntry closestLower = shooterTable.get(0);
@@ -100,8 +99,8 @@ public class ShooterTable {
         double scaleFactor = (distanceMeters - closestLower.distanceMeters)
                 / (closestHigher.distanceMeters - closestLower.distanceMeters);
 
-        double calculatedAngle = scaleFactor * (closestHigher.angleDegrees - closestLower.angleDegrees)
-                + closestLower.angleDegrees;
+        double calculatedAngle = scaleFactor * (closestHigher.wheelRPM - closestLower.wheelRPM)
+                + closestLower.wheelRPM;
 
         return new ShooterTableEntry(distanceMeters, calculatedAngle);
     }
