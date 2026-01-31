@@ -218,6 +218,10 @@ public class DriveSubsystem extends SubsystemBase {
                 pose);
     }
 
+    public void zero() {
+        setOdometry(new Pose2d());
+    }
+
     /**
      * Method to drive the robot via direct speed input.
      *
