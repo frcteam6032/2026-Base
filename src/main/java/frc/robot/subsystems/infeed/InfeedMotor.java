@@ -1,4 +1,4 @@
-package frc.robot.subsystems.motors;
+package frc.robot.subsystems.infeed;
 
 public interface InfeedMotor {
     void setPercent(double percent);

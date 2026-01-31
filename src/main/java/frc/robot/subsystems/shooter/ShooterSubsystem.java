@@ -1,16 +1,12 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.shooter;
 
 import java.util.Optional;
-import java.util.OptionalDouble;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants;
-import frc.robot.subsystems.motors.ShooterMotor;
-import frc.robot.subsystems.motors.ShooterSparkMAX;
 import frc.robot.vision.Limelight;
 import frc.robot.utils.ShooterTable;
 import frc.robot.utils.ShooterTable.ShooterTableEntry;
@@ -27,10 +23,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private static final double kVelSmoothingAlpha = 0.2;
 
-    private double m_lookaheadSeconds = Constants.ShooterConstants.SHOOTER_LOOKAHEAD_SECONDS;
+    public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
 
     public ShooterSubsystem() {
-        m_shooter = new ShooterSparkMAX(Constants.ShooterConstants.SHOOTER_CAN_ID);
+        m_shooter = new ShooterSparkMAX();
         m_limelight = new Limelight();
     }
 
@@ -60,10 +56,6 @@ public class ShooterSubsystem extends SubsystemBase {
         m_lastTime = now;
     }
 
-    public void setLookaheadSeconds(double seconds) {
-        m_lookaheadSeconds = Math.max(0.0, seconds);
-    }
-
     public double getPredictedDistanceMeters() {
         if (!m_limelight.targetValid()) {
             return Double.NaN;
@@ -76,19 +68,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
         Pose2d botPose = m_limelight.getBotPose();
 
-        double predictedX = botPose.getX() + m_vx * m_lookaheadSeconds;
-        double predictedY = botPose.getY() + m_vy * m_lookaheadSeconds;
+        double predictedX = botPose.getX() + m_vx * SHOOTER_LOOKAHEAD_SECONDS;
+        double predictedY = botPose.getY() + m_vy * SHOOTER_LOOKAHEAD_SECONDS;
 
         Pose3d tagPose = tagOpt.get();
         double dx = tagPose.getX() - predictedX;
         double dy = tagPose.getY() - predictedY;
 
         return Math.hypot(dx, dy);
-    }
-
-    public double calculateWheelRPMForDistance(double distanceMeters) {
-        return Constants.ShooterConstants.SHOOTER_BASE_RPM
-                + Constants.ShooterConstants.SHOOTER_RPM_PER_METER * distanceMeters;
     }
 
     public ShooterTableEntry predictedTableEntry() {
@@ -110,8 +97,7 @@ public class ShooterSubsystem extends SubsystemBase {
             return false;
 
         if (useVelocityMapping) {
-            double rpm = calculateWheelRPMForDistance(getPredictedDistanceMeters());
-            m_shooter.setVelocityRPM(rpm);
+            m_shooter.setVelocityRPM(entry.wheelRPM);
         } else {
             // m_shooter.setPercent(entry.beans);
         }
