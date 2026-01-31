@@ -8,6 +8,8 @@ public class InfeedSubsystem {
 
     public InfeedSubsystem() {
         m_infeed = new InfeedSparkMAX();
+        // m_infeed = new InfeedTalonFX();
+
     }
 
     private void runPercent(double percent) {
