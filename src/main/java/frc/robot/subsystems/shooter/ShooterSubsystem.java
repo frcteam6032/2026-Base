@@ -1,10 +1,12 @@
 package frc.robot.subsystems.shooter;
 
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.vision.Limelight;
@@ -25,9 +27,9 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
 
-    public ShooterSubsystem() {
+    public ShooterSubsystem(Limelight limelight) {
         m_shooter = new ShooterSparkMAX();
-        m_limelight = new Limelight();
+        m_limelight = limelight;
         // m_shooter = new ShooterTalonFX();
     }
 
@@ -92,26 +94,26 @@ public class ShooterSubsystem extends SubsystemBase {
         return ShooterTable.calcShooterTableEntry(distance_prediction);
     }
 
-    public boolean applySpeed(boolean useVelocityMapping) {
+    public boolean applySpeed() {
         ShooterTableEntry entry = predictedTableEntry();
         if (entry == null)
             return false;
 
-        if (useVelocityMapping) {
-            m_shooter.setVelocityRPM(entry.wheelRPM);
-        } else {
-            // m_shooter.setPercent(entry.beans);
-        }
+        m_shooter.setVelocityRPM(entry.wheelRPM);
 
         return true;
     }
 
-    public void runPercent(double percent) {
-        m_shooter.setPercent(percent);
+    public Command runShooter() {
+        return run(this::applySpeed);
     }
 
-    public void stop() {
-        m_shooter.stop();
+    public Command runPercentCommand(DoubleSupplier percent) {
+        return run(() -> m_shooter.setPercent(percent.getAsDouble()));
+    }
+
+    public Command stopCommand() {
+        return runOnce(() -> m_shooter.stop());
     }
 
     public double getShooterVelocityRPM() {
