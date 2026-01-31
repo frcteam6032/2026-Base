@@ -22,9 +22,9 @@ public final class Constants {
         public static final double kYawHeadingMinRate = -kYawHeadingMaxRate;
 
         // Chassis configuration
-        public static final double kTrackWidth = Units.inchesToMeters(21.375);
+        public static final double kTrackWidth = Units.inchesToMeters(21.75);
         // Distance between centers of right and left wheels on robot
-        public static final double kWheelBase = Units.inchesToMeters(21.375);
+        public static final double kWheelBase = Units.inchesToMeters(21.75);
         // Distance between front and back wheels on robot
         public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
                 new Translation2d(kWheelBase / 2, kTrackWidth / 2),
@@ -33,24 +33,54 @@ public final class Constants {
                 new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
 
         // Angular offsets of the modules relative to the chassis in radians
-        public static final double kFrontLeftChassisAngularOffset = COMPETITION_ROBOT ? 0 : -Math.PI / 2;
+        public static final double kFrontLeftChassisAngularOffset = Math.PI;
         public static final double kFrontRightChassisAngularOffset = 0;
-        public static final double kBackLeftChassisAngularOffset = COMPETITION_ROBOT ? 0 : Math.PI;
-        public static final double kBackRightChassisAngularOffset = COMPETITION_ROBOT ? 0 : Math.PI / 2;
+        public static final double kBackLeftChassisAngularOffset = Math.PI;
+        public static final double kBackRightChassisAngularOffset = 0;
 
         // SPARK MAX CAN IDs
         public static final int kFrontLeftDrivingCanId = 1;
-        public static final int kFrontRightDrivingCanId = COMPETITION_ROBOT ? 3 : 2;
-        public static final int kRearLeftDrivingCanId = COMPETITION_ROBOT ? 5 : 3;
-        public static final int kRearRightDrivingCanId = COMPETITION_ROBOT ? 7 : 4;
+        public static final int kFrontRightDrivingCanId = 3;
+        public static final int kRearLeftDrivingCanId = 5;
+        public static final int kRearRightDrivingCanId = 7;
 
-        public static final int kFrontLeftTurningCanId = COMPETITION_ROBOT ? 2 : 5;
-        public static final int kFrontRightTurningCanId = COMPETITION_ROBOT ? 4 : 6;
-        public static final int kRearLeftTurningCanId = COMPETITION_ROBOT ? 6 : 7;
+        public static final int kFrontLeftTurningCanId = 2;
+        public static final int kFrontRightTurningCanId = 4;
+        public static final int kRearLeftTurningCanId = 6;
         public static final int kRearRightTurningCanId = 8;
 
         public static final int kGyroCanId = 0;
         public static final boolean kGyroReversed = false;
+    }
+
+    public static final class ShooterConstants {
+        public static final int SHOOTER_CAN_ID = -1;
+
+        public static final double SHOOTER_P = 0.0005;
+        public static final double SHOOTER_I = 0.0;
+        public static final double SHOOTER_D = 0.0;
+        public static final double SHOOTER_FF = 1.0 / 5676.0; // rough kV (1 / freeSpeedRpm)
+
+        public static final double SHOOTER_BASE_RPM = 2000.0;
+        public static final double SHOOTER_RPM_PER_METER = 1000.0;
+
+        public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
+    }
+
+    public static final class InfeedConstants {
+        public static final int INFEED_CAN_ID = -1;
+
+        public static final double INFEED_P = 0.001;
+        public static final double INFEED_I = 0.0;
+        public static final double INFEED_D = 0.0;
+    }
+
+    public static final class FeederConstants {
+        public static final int FEEDER_CAN_ID = -1;
+
+        public static final double INFEED_P = 0.001;
+        public static final double INFEED_I = 0.0;
+        public static final double INFEED_D = 0.0;
     }
 
     public static final class ModuleConstants {

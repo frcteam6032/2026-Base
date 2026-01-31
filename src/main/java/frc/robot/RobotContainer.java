@@ -7,11 +7,15 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-
+import frc.robot.Constants.FeederConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.feeder.FeederSubsystem;
+import frc.robot.subsystems.infeed.InfeedSubsystem;
+import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.utils.GameData;
 import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
@@ -20,6 +24,9 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
+    // private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(m_limelight);
+    // private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();
+    // private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
@@ -30,8 +37,8 @@ public class RobotContainer {
 
     private SendableChooser<Command> autoChooser;
 
-    private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
-    private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
+    private final SlewRateLimiter xLimiter = new SlewRateLimiter(8.);
+    private final SlewRateLimiter yLimiter = new SlewRateLimiter(8.);
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
 
     private double getRotationSpeed() {
@@ -80,9 +87,11 @@ public class RobotContainer {
                         () -> m_robotDrive.joystickDrive(
                                 getXSpeed() * GameData.shouldInvertControls(),
                                 getYSpeed() * GameData.shouldInvertControls(),
-                                getRotationSpeed(),
+                                -getRotationSpeed(),
                                 true),
                         m_robotDrive));
+
+        m_driverController.start().onTrue(Commands.run(() -> m_robotDrive.zero()));
     }
 
     // Get the selected auto command
