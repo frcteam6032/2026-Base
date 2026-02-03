@@ -9,20 +9,16 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 public class InfeedSparkMAX implements InfeedMotor {
-    private final SparkMax m_motor;
-    private final RelativeEncoder m_encoder;
-
     private static final int MOTOR_ID = -1;
+
+    private final SparkMax m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
+    private final SparkMaxConfig m_config = new SparkMaxConfig();
+    private final RelativeEncoder m_encoder;
 
     @SuppressWarnings("removal")
     public InfeedSparkMAX() {
-        m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
-
-        SparkMaxConfig cfg = new SparkMaxConfig();
-        cfg.idleMode(IdleMode.kBrake).smartCurrentLimit(30).inverted(false);
-
-        m_motor.configure(cfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
+        m_config.idleMode(IdleMode.kBrake).smartCurrentLimit(30).inverted(false);
+        m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         m_encoder = m_motor.getEncoder();
     }
 

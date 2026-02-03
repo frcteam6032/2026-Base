@@ -1,9 +1,9 @@
 package frc.robot.subsystems.feeder;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class FeederSubsystem {
+public class FeederSubsystem extends SubsystemBase {
     private final FeederMotor m_feeder;
 
     public FeederSubsystem() {
@@ -23,10 +23,10 @@ public class FeederSubsystem {
     }
 
     public Command intakeCommand(double percent) {
-        return Commands.runOnce(() -> runPercent(percent));
+        return run(() -> runPercent(percent));
     }
 
     public Command stopCommand() {
-        return Commands.runOnce(this::stop);
+        return runOnce(this::stop);
     }
 }

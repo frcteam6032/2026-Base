@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.FeederConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.feeder.FeederSubsystem;
@@ -25,7 +24,7 @@ public class RobotContainer {
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
     // private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(m_limelight);
-    // private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();
+    private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();
     // private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
 
     // Create the driver controller
@@ -42,7 +41,7 @@ public class RobotContainer {
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
 
     private double getRotationSpeed() {
-        return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getRightX(), thetaLimiter,
+        return MathUtil.applyDeadband(MathUtils.scaleDriverController(m_driverController.getRightX(), thetaLimiter,
                 m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND);
     }
 
@@ -87,11 +86,15 @@ public class RobotContainer {
                         () -> m_robotDrive.joystickDrive(
                                 getXSpeed() * GameData.shouldInvertControls(),
                                 getYSpeed() * GameData.shouldInvertControls(),
-                                -getRotationSpeed(),
+                                getRotationSpeed(),
                                 true),
                         m_robotDrive));
 
         m_driverController.start().onTrue(Commands.run(() -> m_robotDrive.zero()));
+
+        m_infeedSubsystem.setDefaultCommand(m_infeedSubsystem.stopCommand());
+        m_driverController.leftTrigger().whileTrue(m_infeedSubsystem.intakeCommand(0.5));
+        m_driverController.leftBumper().whileTrue(m_infeedSubsystem.intakeCommand(-0.4));
     }
 
     // Get the selected auto command

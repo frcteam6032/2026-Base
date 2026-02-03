@@ -17,10 +17,6 @@ import com.revrobotics.spark.FeedbackSensor;
  * present in this project.
  */
 public class ShooterSparkMAX implements ShooterMotor {
-    private final SparkMax m_motor;
-    private final RelativeEncoder m_encoder;
-    private final SparkClosedLoopController m_closedLoop;
-
     private static final double kP = 0.0005;
     private static final double kI = 0.0;
     private static final double kD = 0.0;
@@ -28,24 +24,27 @@ public class ShooterSparkMAX implements ShooterMotor {
 
     public static final int MOTOR_ID = -1;
 
+    private final SparkMax m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
+    private final SparkMaxConfig m_config = new SparkMaxConfig();
+    private final FeedForwardConfig m_ff = new FeedForwardConfig();
+    private final RelativeEncoder m_encoder;
+    private final SparkClosedLoopController m_closedLoop;
+
     @SuppressWarnings("removal")
     public ShooterSparkMAX() {
-        m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
+        m_ff.kV(kFF);
 
-        SparkMaxConfig cfg = new SparkMaxConfig();
-        FeedForwardConfig ff = new FeedForwardConfig().kV(kFF);
-
-        cfg.idleMode(IdleMode.kCoast)
+        m_config.idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(40)
                 .inverted(false);
 
-        cfg.closedLoop
+        m_config.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(kP, kI, kD)
-                .apply(ff)
+                .apply(m_ff)
                 .outputRange(-1, 1);
 
-        m_motor.configure(cfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         m_encoder = m_motor.getEncoder();
         m_closedLoop = m_motor.getClosedLoopController();

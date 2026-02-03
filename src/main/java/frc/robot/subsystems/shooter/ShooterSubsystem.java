@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.vision.Limelight;
+import frc.robot.utils.DashboardStore;
 import frc.robot.utils.ShooterTable;
 import frc.robot.utils.ShooterTable.ShooterTableEntry;
 
@@ -31,6 +32,12 @@ public class ShooterSubsystem extends SubsystemBase {
         m_shooter = new ShooterSparkMAX();
         m_limelight = limelight;
         // m_shooter = new ShooterTalonFX();
+
+        setupDashboard();
+    }
+
+    private void setupDashboard() {
+        DashboardStore.add("Shooter RPM", this::getVelocityRPM);
     }
 
     @Override
@@ -116,7 +123,7 @@ public class ShooterSubsystem extends SubsystemBase {
         return runOnce(() -> m_shooter.stop());
     }
 
-    public double getShooterVelocityRPM() {
+    public double getVelocityRPM() {
         return m_shooter.getVelocityRPM();
     }
 }
