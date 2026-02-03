@@ -1,15 +1,14 @@
 package frc.robot.subsystems.infeed;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class InfeedSubsystem {
+public class InfeedSubsystem extends SubsystemBase {
     private final InfeedMotor m_infeed;
 
     public InfeedSubsystem() {
-        m_infeed = new InfeedSparkMAX();
-        // m_infeed = new InfeedTalonFX();
-
+        // m_infeed = new InfeedSparkMAX();
+        m_infeed = new InfeedTalonFX();
     }
 
     private void runPercent(double percent) {
@@ -25,10 +24,10 @@ public class InfeedSubsystem {
     }
 
     public Command intakeCommand(double percent) {
-        return Commands.runOnce(() -> runPercent(percent));
+        return run(() -> runPercent(percent));
     }
 
     public Command stopCommand() {
-        return Commands.runOnce(this::stop);
+        return runOnce(this::stop);
     }
 }
