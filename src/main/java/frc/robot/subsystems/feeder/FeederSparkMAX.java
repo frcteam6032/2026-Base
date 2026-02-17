@@ -9,7 +9,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 public class FeederSparkMAX implements FeederMotor {
-    private static final int MOTOR_ID = -1;
+    private static final int MOTOR_ID = 9;
 
     private final SparkMax m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
     private final SparkMaxConfig m_config = new SparkMaxConfig();
@@ -17,7 +17,7 @@ public class FeederSparkMAX implements FeederMotor {
 
     @SuppressWarnings("removal")
     public FeederSparkMAX() {
-        m_config.idleMode(IdleMode.kBrake).smartCurrentLimit(30).inverted(false);
+        m_config.idleMode(IdleMode.kBrake).smartCurrentLimit(30).inverted(true);
         m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         m_encoder = m_motor.getEncoder();
     }

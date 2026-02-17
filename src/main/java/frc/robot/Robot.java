@@ -44,10 +44,10 @@ public class Robot extends TimedRobot {
         // and set up helper functions
         m_robotContainer = new RobotContainer();
 
-        CameraServer.startAutomaticCapture();
+        // CameraServer.startAutomaticCapture();
 
         // speeds up autos a bit
-        FollowPathCommand.warmupCommand().schedule();
+        CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
 
         // Update dashboard values every 100ms
         addPeriodic(() -> {
@@ -113,7 +113,7 @@ public class Robot extends TimedRobot {
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
         if (m_autonomousCommand != null) {
             Command delayCommand = new SuppliedWaitCommand(m_robotContainer::getDelay);
-            delayCommand.andThen(m_autonomousCommand).schedule();
+            CommandScheduler.getInstance().schedule(delayCommand.andThen(m_autonomousCommand));
         }
     }
 

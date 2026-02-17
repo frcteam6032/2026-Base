@@ -25,7 +25,7 @@ public class RobotContainer {
     private final Limelight m_limelight = new Limelight();
     // private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(m_limelight);
     private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();
-    // private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
+    private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
@@ -94,7 +94,12 @@ public class RobotContainer {
 
         m_infeedSubsystem.setDefaultCommand(m_infeedSubsystem.stopCommand());
         m_driverController.leftTrigger().whileTrue(m_infeedSubsystem.intakeCommand(0.5));
-        m_driverController.leftBumper().whileTrue(m_infeedSubsystem.intakeCommand(-0.4));
+        m_driverController.leftBumper().whileTrue(m_infeedSubsystem.intakeCommand(-0.8));
+
+        m_feederSubsystem.setDefaultCommand(m_feederSubsystem.stopCommand());
+        m_driverController.y().whileTrue(m_feederSubsystem.intakeCommand(0.8));
+        m_driverController.rightBumper().whileTrue(m_feederSubsystem.intakeCommand(-0.8));
+
     }
 
     // Get the selected auto command

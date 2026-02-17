@@ -1,40 +1,48 @@
 package frc.robot.subsystems.infeed;
 
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.PersistMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkFlex;
 
 public class InfeedSparkFlex implements InfeedMotor {
-
-    private static final int MOTOR_ID = -1;
+    private static final int MOTOR_ID = 12;
 
     private final SparkFlex m_motor = new SparkFlex(MOTOR_ID, MotorType.kBrushless);
     private final SparkMaxConfig m_config = new SparkMaxConfig();
+    private final RelativeEncoder m_encoder = m_motor.getEncoder();
 
-    @SuppressWarnings("removal")
+    // @SuppressWarnings("removal")
     public InfeedSparkFlex() {
-        m_config.idleMode(IdleMode.kBrake).smartCurrentLimit(30).inverted(false);
+        m_config.idleMode(IdleMode.kCoast)
+            .smartCurrentLimit(40)
+            .inverted(true)
+            .voltageCompensation(12.0);
         m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     @Override
     public void setPercent(double percent) {
-        return;
+        m_motor.set(percent);
     }
 
     @Override
     public double getVelocityRPM() {
-        return 0;
+        // Max. RPM: 6740
+        return m_encoder.getVelocity();
     }
 
     @Override
     public void stop() {
-        return;
+        setPercent(0.0);
+    }
+
+    @Override
+    public double getSupplyCurrent() {
+        return m_motor.getOutputCurrent();
     }
 
 }

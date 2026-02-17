@@ -43,4 +43,10 @@ public class InfeedTalonFX implements InfeedMotor {
         setPercent(0);
     }
 
+    @Override
+    public double getSupplyCurrent() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getSupplyCurrent'");
+    }
+
 }

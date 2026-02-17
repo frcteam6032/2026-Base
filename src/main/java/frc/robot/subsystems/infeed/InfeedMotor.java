@@ -4,6 +4,7 @@ public interface InfeedMotor {
     void setPercent(double percent);
 
     double getVelocityRPM();
+    double getSupplyCurrent();
 
     void stop();
 }
