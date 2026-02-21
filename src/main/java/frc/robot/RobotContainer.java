@@ -23,7 +23,7 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
-    // private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(m_limelight);
+    private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(m_limelight);
     private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();
     private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
 
@@ -99,6 +99,9 @@ public class RobotContainer {
         m_feederSubsystem.setDefaultCommand(m_feederSubsystem.stopCommand());
         m_driverController.y().whileTrue(m_feederSubsystem.intakeCommand(0.8));
         m_driverController.rightBumper().whileTrue(m_feederSubsystem.intakeCommand(-0.8));
+
+        m_shooterSubsystem.setDefaultCommand(m_shooterSubsystem.stopCommand());
+        m_driverController.x().whileTrue(m_shooterSubsystem.runTargetCommand());
 
     }
 

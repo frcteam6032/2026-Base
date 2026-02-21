@@ -1,107 +1,75 @@
 package frc.robot.utils;
 
-import java.util.ArrayList;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import static edu.wpi.first.units.Units.Feet;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.RPM;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import java.util.ArrayList;
+
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Distance;
 
 public class ShooterTable {
     public static final class ShooterTableEntry {
-        public double distanceMeters;
-        public double wheelRPM;
+        public Distance distance;
+        public AngularVelocity wheelSpeed;
 
-        public ShooterTableEntry(double distanceMeters, double wheelRPM) {
-            this.distanceMeters = distanceMeters;
-            this.wheelRPM = wheelRPM;
+        public ShooterTableEntry(Distance distance, AngularVelocity wheelSpeed) {
+            this.distance = distance;
+            this.wheelSpeed = wheelSpeed;
         }
 
         public ShooterTableEntry average(ShooterTableEntry other) {
-            return new ShooterTableEntry((distanceMeters + other.distanceMeters) / 2.0,
-                    (wheelRPM + other.wheelRPM) / 2.0);
+            return new ShooterTableEntry(distance.plus(other.distance).div(2.0),
+                    wheelSpeed.plus(other.wheelSpeed).div(2.0));
         }
     }
 
     private static ArrayList<ShooterTableEntry> shooterTable = new ArrayList<>();
 
-    private static double feetToMeters(double feet) {
-        return Units.inchesToMeters(feet * 12.0);
+    private static void addEntry(Distance distance, AngularVelocity speed) {
+        shooterTable.add(new ShooterTableEntry(distance, speed));
     }
 
     private static void fillInTable() {
-        /*
-         * *
-         * // shooter table entries (converted from example values in feet)
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(4.4), 30.9 + 0.25, 0.6,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(5.0), 28.0 + 0.25, 0.7,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(6.0), 23.8 + 0.25, 0.8,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(8.0), 17.0 + 0.25, 0.9,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(10.0), 13.1 + 0.25, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(11.5), 10.2 + 0.25, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(13.0), 7.7 + 0.75, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(14.5), 6.5 + 0.75, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(16.0), 5.1 + 0.75, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(17.5), 4.9 + 0.75, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(19.0), 4.4 + 0.75, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(20.5), 3.58 + 0.25, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(22.0), 3.1 + 0.25, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(24.0), 2.6 + 0.25, 1.0,
-         * 0.0));
-         * shooterTable.add(new ShooterTableEntry(feetToMeters(27.0), 0.25 + 0.25, 0.98,
-         * 0.0));
-         */
+        addEntry(Feet.of(4), RPM.of(2950));
+        addEntry(Feet.of(5), RPM.of(3000));
+        addEntry(Feet.of(6), RPM.of(3110));
+        addEntry(Feet.of(7), RPM.of(3250));
+        addEntry(Feet.of(8), RPM.of(3360));
+        addEntry(Feet.of(9), RPM.of(3450));
+        addEntry(Feet.of(10), RPM.of(3610));
     }
 
     static {
         fillInTable();
     }
 
-    public static ShooterTableEntry calcShooterTableEntry(double distanceMeters) {
-        SmartDashboard.putNumber("Index_m", distanceMeters);
+    public static ShooterTableEntry calcShooterTableEntry(Distance distance) {
         ShooterTableEntry closestLower = shooterTable.get(0);
         ShooterTableEntry closestHigher = shooterTable.get(shooterTable.size() - 1);
 
-        if (distanceMeters <= closestLower.distanceMeters)
+        if (distance.lte(closestLower.distance))
             return closestLower;
-        if (distanceMeters >= closestHigher.distanceMeters)
+
+        if (distance.gte(closestHigher.distance))
             return closestHigher;
 
         for (ShooterTableEntry entry : shooterTable) {
-            if (entry.distanceMeters < distanceMeters
-                    && (Math.abs(distanceMeters - closestLower.distanceMeters) > Math
-                            .abs(distanceMeters - entry.distanceMeters))) {
+            if (entry.distance.lt(distance) &&
+                    distance.minus(closestLower.distance).abs(Meters) > distance.minus(entry.distance).abs(Meters))
                 closestLower = entry;
-            } else if (entry.distanceMeters > distanceMeters
-                    && (Math.abs(closestHigher.distanceMeters - distanceMeters) > Math
-                            .abs(entry.distanceMeters - distanceMeters))) {
+            else if (entry.distance.gt(distance) &&
+                    distance.minus(closestHigher.distance).abs(Meters) > distance.minus(entry.distance).abs(Meters))
                 closestHigher = entry;
-            } else if (Math.abs(entry.distanceMeters - distanceMeters) < 1e-9) {
+            else if (entry.distance.minus(distance).abs(Meters) < 1e-9)
                 return entry;
-            }
         }
 
-        double scaleFactor = (distanceMeters - closestLower.distanceMeters)
-                / (closestHigher.distanceMeters - closestLower.distanceMeters);
+        double scale = distance.minus(closestLower.distance).div(closestHigher.distance.minus(closestLower.distance))
+                .magnitude();
+        var angle = closestHigher.wheelSpeed.minus(closestLower.wheelSpeed).times(scale).plus(closestLower.wheelSpeed);
 
-        double calculatedAngle = scaleFactor * (closestHigher.wheelRPM - closestLower.wheelRPM)
-                + closestLower.wheelRPM;
-
-        return new ShooterTableEntry(distanceMeters, calculatedAngle);
+        return new ShooterTableEntry(distance, angle);
     }
 }

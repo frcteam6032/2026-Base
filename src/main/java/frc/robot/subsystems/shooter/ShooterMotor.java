@@ -6,6 +6,7 @@ public interface ShooterMotor {
     void setVelocityRPM(double rpm);
 
     double getVelocityRPM();
+    double getSupplyCurrent();
 
     void stop();
 }

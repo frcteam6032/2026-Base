@@ -17,7 +17,7 @@ public class FeederSparkMAX implements FeederMotor {
 
     @SuppressWarnings("removal")
     public FeederSparkMAX() {
-        m_config.idleMode(IdleMode.kBrake).smartCurrentLimit(30).inverted(true);
+        m_config.idleMode(IdleMode.kBrake).smartCurrentLimit(40).inverted(true);
         m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         m_encoder = m_motor.getEncoder();
     }
@@ -35,5 +35,10 @@ public class FeederSparkMAX implements FeederMotor {
     @Override
     public void stop() {
         m_motor.set(0);
+    }
+
+    @Override
+    public double getSupplyCurrent() {
+        return m_motor.getOutputCurrent();
     }
 }

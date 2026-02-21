@@ -2,13 +2,17 @@ package frc.robot.subsystems.feeder;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utils.DashboardStore;
 
 public class FeederSubsystem extends SubsystemBase {
     private final FeederMotor m_feeder;
 
     public FeederSubsystem() {
         m_feeder = new FeederSparkMAX();
-    }
+
+        DashboardStore.add("Feeder/Velocity", m_feeder::getVelocityRPM);
+        DashboardStore.add("Feeder/Current", m_feeder::getSupplyCurrent);
+   }
 
     private void runPercent(double percent) {
         m_feeder.setPercent(percent);

@@ -17,25 +17,25 @@ import com.revrobotics.spark.FeedbackSensor;
  * present in this project.
  */
 public class ShooterSparkMAX implements ShooterMotor {
-    private static final double kP = 0.0005;
+    private static final double kP = 0.01;
     private static final double kI = 0.0;
     private static final double kD = 0.0;
     private static final double kFF = 1.0 / 5676.0; // rough kV (1 / freeSpeedRpm)
 
-    public static final int MOTOR_ID = -1;
+    public static final int MOTOR_ID = 10;
 
     private final SparkMax m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
     private final SparkMaxConfig m_config = new SparkMaxConfig();
     private final FeedForwardConfig m_ff = new FeedForwardConfig();
-    private final RelativeEncoder m_encoder;
-    private final SparkClosedLoopController m_closedLoop;
+    private final RelativeEncoder m_encoder = m_motor.getEncoder();
+    private final SparkClosedLoopController m_closedLoop = m_motor.getClosedLoopController();
 
     @SuppressWarnings("removal")
     public ShooterSparkMAX() {
         m_ff.kV(kFF);
 
         m_config.idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(40)
+                .smartCurrentLimit(60)
                 .inverted(false);
 
         m_config.closedLoop
@@ -45,19 +45,13 @@ public class ShooterSparkMAX implements ShooterMotor {
                 .outputRange(-1, 1);
 
         m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-        m_encoder = m_motor.getEncoder();
-        m_closedLoop = m_motor.getClosedLoopController();
     }
 
     public void setPercent(double percent) {
-        m_closedLoop.setSetpoint(percent, ControlType.kDutyCycle);
+        m_motor.set(percent);
     }
 
     public void setVelocityRPM(double rpm) {
-        // Spark wrapper expects velocity in the same units as encoder (RPM by default
-        // unless
-        // conversion factors applied). We'll set the closed-loop velocity setpoint.
         m_closedLoop.setSetpoint(rpm, ControlType.kVelocity);
     }
 
@@ -66,6 +60,11 @@ public class ShooterSparkMAX implements ShooterMotor {
     }
 
     public void stop() {
-        m_closedLoop.setSetpoint(0.0, ControlType.kDutyCycle);
+        m_motor.set(0);
+    }
+
+    @Override
+    public double getSupplyCurrent() {
+        return m_motor.getOutputCurrent();
     }
 }

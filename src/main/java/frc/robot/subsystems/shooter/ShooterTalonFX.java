@@ -71,4 +71,10 @@ public class ShooterTalonFX implements ShooterMotor {
         setVelocityRPM(0);
     }
 
+    @Override
+    public double getSupplyCurrent() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getSupplyCurrent'");
+    }
+
 }
