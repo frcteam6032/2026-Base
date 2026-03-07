@@ -25,11 +25,11 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
-    private final ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem(m_limelight);
-    private final InfeedSubsystem m_infeedSubsystem = new InfeedSubsystem();
-    private final FeederSubsystem m_feederSubsystem = new FeederSubsystem();
-    private final InfeedArmSubsystem m_InfeedArmSubsystem = new InfeedArmSubsystem();
-    private final SpindexerSubsystem m_SpindexerSubsystem = new SpindexerSubsystem();
+    private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight);
+    private final InfeedSubsystem m_infeed = new InfeedSubsystem();
+    private final FeederSubsystem m_feeder = new FeederSubsystem();
+    private final InfeedArmSubsystem m_infeedArm = new InfeedArmSubsystem();
+    private final SpindexerSubsystem m_spindexer = new SpindexerSubsystem();
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
@@ -96,35 +96,35 @@ public class RobotContainer {
 
         m_driverController.start().onTrue(Commands.run(() -> m_robotDrive.zero()));
 
-        m_infeedSubsystem.setDefaultCommand(m_infeedSubsystem.stopCommand());
-        m_driverController.leftTrigger().whileTrue(m_infeedSubsystem.intakeCommand(0.5));
-        m_driverController.leftBumper().whileTrue(m_infeedSubsystem.intakeCommand(-0.8));
+        m_infeed.setDefaultCommand(m_infeed.stopCommand());
+        m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(0.5));
+        m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-0.8));
 
-        m_feederSubsystem.setDefaultCommand(m_feederSubsystem.stopCommand());
-        m_driverController.y().whileTrue(m_feederSubsystem.intakeCommand(0.8));
-        m_driverController.rightBumper().whileTrue(m_feederSubsystem.intakeCommand(-0.8));
+        m_feeder.setDefaultCommand(m_feeder.stopCommand());
+        m_driverController.y().whileTrue(m_feeder.intakeCommand(0.8));
+        m_driverController.rightBumper().whileTrue(m_feeder.intakeCommand(-0.8));
 
-        m_shooterSubsystem.setDefaultCommand(m_shooterSubsystem.stopCommand());
+        m_shooter.setDefaultCommand(m_shooter.stopCommand());
         // Change to automatic shooter command for testing
-        m_driverController.x().whileTrue(m_shooterSubsystem.runTargetCommand());
+        m_driverController.x().whileTrue(m_shooter.runTargetCommand());
 
         // TODO set up the spindexer ands infeed arm commands for the driver/operator
-        m_driverController.leftTrigger().whileTrue(m_infeedSubsystem.intakeCommand(0.3));
-        m_driverController.rightBumper().onTrue(m_InfeedArmSubsystem.switchPosition());
+        m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(0.3));
+        m_driverController.rightBumper().onTrue(m_infeedArm.switchPosition());
 
-        m_operatorController.x().onTrue(m_shooterSubsystem.automaticShooter());
+        m_operatorController.x().onTrue(m_shooter.automaticShooter());
 
-        m_operatorController.leftTrigger().whileTrue(m_InfeedArmSubsystem.goToDeploy());
-        m_operatorController.rightTrigger().whileTrue(m_InfeedArmSubsystem.goToStow());
+        m_operatorController.leftTrigger().whileTrue(m_infeedArm.goToDeploy());
+        m_operatorController.rightTrigger().whileTrue(m_infeedArm.goToStow());
 
         Command parallelGroup = Commands.parallel(
-                m_infeedSubsystem.intakeCommand(0.3),
-                m_SpindexerSubsystem.spinCommand(0.3));
+                m_infeed.intakeCommand(0.3),
+                m_spindexer.spinCommand(0.3));
 
         m_driverController.y()
                 .onTrue(parallelGroup);
 
-        m_operatorController.leftBumper().onTrue(m_infeedSubsystem.intakeCommand(-0.3));
+        m_operatorController.leftBumper().onTrue(m_infeed.intakeCommand(-0.3));
 
     }
 
