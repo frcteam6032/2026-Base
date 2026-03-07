@@ -1,4 +1,4 @@
-package frc.robot.subsystems.InfeedArm;
+package frc.robot.subsystems.infeedArm;
 
 public interface InfeedArm {
     void setPercent(double percent);

@@ -12,9 +12,9 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.InfeedArm.InfeedArmSubsystem;
 import frc.robot.subsystems.feeder.FeederSubsystem;
 import frc.robot.subsystems.infeed.InfeedSubsystem;
+import frc.robot.subsystems.infeedArm.InfeedArmSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.spindexer.SpindexerSubsystem;
 import frc.robot.utils.GameData;
@@ -38,6 +38,13 @@ public class RobotContainer {
     private final CommandXboxController m_operatorController = new CommandXboxController(
             OIConstants.OPERATOR_CONTROLLER);
 
+    // COMMAND CONSTANTS //
+    private static final double INFEED_SPEED = 0.5;
+    private static final double FEEDER_SPEED = 0.5;
+    private static final double SPINDEXER_SPEED = 0.5;
+    private static final double SHOOTER_SPIT_SPEED = 0.5;
+
+    // AUTO/DRIVER STUFF //
     private SendableChooser<Command> autoChooser;
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(8.);
@@ -80,11 +87,8 @@ public class RobotContainer {
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
-    /**
-     * DONT CHANGE THESE
-     */
     private void configureButtonBindings() {
-        // Default drive command
+        // DEFAULT COMMANDS //
         m_robotDrive.setDefaultCommand(
                 new RunCommand(
                         () -> m_robotDrive.joystickDrive(
@@ -94,37 +98,49 @@ public class RobotContainer {
                                 true),
                         m_robotDrive));
 
+        // shooter should always be running due to epic inertia
+        m_shooter.setDefaultCommand(m_shooter.runPercentCommand(() -> 0.3));
+        m_infeed.setDefaultCommand(m_infeed.stopCommand());
+        m_feeder.setDefaultCommand(m_feeder.stopCommand());
+        m_spindexer.setDefaultCommand(m_spindexer.stopCommand());
+
+        // ====== //
+        // DRIVER //
+        // ====== //
         m_driverController.start().onTrue(Commands.run(() -> m_robotDrive.zero()));
 
-        m_infeed.setDefaultCommand(m_infeed.stopCommand());
-        m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(0.5));
-        m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-0.8));
+        // INFEED //
+        m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(INFEED_SPEED));
+        m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
 
-        m_feeder.setDefaultCommand(m_feeder.stopCommand());
-        m_driverController.y().whileTrue(m_feeder.intakeCommand(0.8));
-        m_driverController.rightBumper().whileTrue(m_feeder.intakeCommand(-0.8));
-
-        m_shooter.setDefaultCommand(m_shooter.stopCommand());
-        // Change to automatic shooter command for testing
+        // TESTING, PLEASE REMOVE //
         m_driverController.x().whileTrue(m_shooter.runTargetCommand());
 
-        // TODO set up the spindexer ands infeed arm commands for the driver/operator
-        m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(0.3));
-        m_driverController.rightBumper().onTrue(m_infeedArm.switchPosition());
+        // ======== //
+        // OPERATOR //
+        // ======== //
 
-        m_operatorController.x().onTrue(m_shooter.automaticShooter());
+        // SHOOTER //
 
-        m_operatorController.leftTrigger().whileTrue(m_infeedArm.goToDeploy());
-        m_operatorController.rightTrigger().whileTrue(m_infeedArm.goToStow());
+        // TODO: X should be a command that:
+        // - Spins up the shooter, and rotates based on limelight
+        // - Reset the shooter based on the new distance
+        m_operatorController.x().toggleOnTrue(m_shooter.automaticShooter());
+        m_operatorController.b().toggleOnTrue(m_shooter.runPercentCommand(() -> SHOOTER_SPIT_SPEED));
 
-        Command parallelGroup = Commands.parallel(
-                m_infeed.intakeCommand(0.3),
-                m_spindexer.spinCommand(0.3));
+        // INFEED ARM, MANUAL OVERRIDES //
+        m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-10));
+        m_operatorController.rightTrigger().onTrue(m_infeedArm.bumpCommand(10));
 
+        // FEED TO SHOOTER //
         m_driverController.y()
-                .onTrue(parallelGroup);
+                .whileTrue(m_feeder.intakeCommand(FEEDER_SPEED).alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)));
 
-        m_operatorController.leftBumper().onTrue(m_infeed.intakeCommand(-0.3));
+        // OUTTAKE //
+        m_operatorController.leftBumper().whileTrue(
+                m_infeed.intakeCommand(-INFEED_SPEED)
+                        .alongWith(m_feeder.intakeCommand(-FEEDER_SPEED))
+                        .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED)));
 
     }
 

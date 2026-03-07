@@ -1,4 +1,4 @@
-package frc.robot.subsystems.InfeedArm;
+package frc.robot.subsystems.infeedArm;
 
 import java.util.function.DoubleSupplier;
 
