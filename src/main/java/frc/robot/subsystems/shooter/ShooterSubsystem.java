@@ -3,6 +3,8 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
+import java.lang.constant.DirectMethodHandleDesc;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
@@ -14,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.vision.Limelight;
+import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.utils.DashboardStore;
 import frc.robot.utils.ShooterTable;
 import frc.robot.utils.ShooterTable.ShooterTableEntry;
@@ -21,6 +24,7 @@ import frc.robot.utils.ShooterTable.ShooterTableEntry;
 public class ShooterSubsystem extends SubsystemBase {
     private final ShooterMotor m_shooter;
     private final Limelight m_limelight;
+    private final DriveSubsystem m_DriveSubsystem;
 
     private double m_vx = 0.0;
     private double m_vy = 0.0;
@@ -34,9 +38,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private double m_target = 0.0;
 
-    public ShooterSubsystem(Limelight limelight) {
+    public ShooterSubsystem(Limelight limelight, DriveSubsystem drivetrain) {
         m_shooter = new ShooterSparkMAX();
         m_limelight = limelight;
+        m_DriveSubsystem = drivetrain;
         // m_shooter = new ShooterTalonFX();
 
         setupDashboard();
@@ -49,12 +54,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (!m_limelight.targetValid()) {
-            // If no valid target we still may be able to read botpose; but skip if not
-            return;
-        }
-
-        Pose2d currentPose = m_limelight.getBotPose();
+        Pose2d currentPose = m_DriveSubsystem.getRobotPoseEstimate();
         double now = Timer.getFPGATimestamp();
 
         if (m_lastPose != null && (now - m_lastTime) > 1e-6) {
@@ -73,6 +73,15 @@ public class ShooterSubsystem extends SubsystemBase {
         m_lastTime = now;
 
         m_target = SmartDashboard.getNumber("Shooter/Target", 0.0);
+
+        final boolean shooterReady = m_limelight.targetValid();
+        double distance = m_limelight.getDistance();
+        double xOffset = m_limelight.getXOffset();
+
+        DashboardStore.add("shooter/Shooter Ready", () -> shooterReady);
+        DashboardStore.add("shooter/Distance", () -> distance);
+        DashboardStore.add("shooter/Offset", () -> xOffset);
+
     }
 
     private boolean isShotPlausible(double distanceMeters) {
@@ -95,15 +104,8 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public double getPredictedDistanceMeters() {
-        if (!m_limelight.targetValid()) {
-            return Double.NaN;
-        }
 
         Optional<Pose3d> tagOpt = m_limelight.getFiducialPose3d();
-
-        if (tagOpt.isEmpty()) {
-            return Double.NaN;
-        }
 
         // Prevent small errs
         if (m_vx == 0.0 && m_vy == 0.0) {
@@ -112,7 +114,7 @@ public class ShooterSubsystem extends SubsystemBase {
             return Math.hypot(tagPose.getX(), tagPose.getY());
         }
 
-        Pose2d botPose = m_limelight.getBotPose();
+        Pose2d botPose = m_DriveSubsystem.getRobotPoseEstimate();
 
         double lookAhead = getDynamicLookAhead();
 
@@ -127,14 +129,8 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public ShooterTableEntry predictedTableEntry() {
-        if (!m_limelight.targetValid()) {
-            return null;
-        }
 
         double distance_prediction = getPredictedDistanceMeters();
-        if (Double.isNaN(distance_prediction)) {
-            return null;
-        }
 
         return ShooterTable.calcShooterTableEntry(Meters.of(distance_prediction));
     }

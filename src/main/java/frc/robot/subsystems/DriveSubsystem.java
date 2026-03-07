@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
@@ -187,6 +188,21 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearLeft.getPosition(),
                         m_rearRight.getPosition()
                 });
+
+        if (m_limelight.targetValid()) {
+            Pose2d mt2 = m_limelight.getBotPose();
+
+            double latency = m_limelight.getLatency();
+            double timestamp = Timer.getFPGATimestamp();
+
+            double correctedTimestamp = timestamp - latency;
+
+            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 0.5));
+            m_poseEstimator.addVisionMeasurement(
+                    mt2,
+                    correctedTimestamp);
+        }
+
     }
 
     Rotation2d getRotation2D() {
