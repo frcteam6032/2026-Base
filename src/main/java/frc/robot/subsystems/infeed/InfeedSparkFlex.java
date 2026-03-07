@@ -15,7 +15,6 @@ public class InfeedSparkFlex implements InfeedMotor {
     private final SparkMaxConfig m_config = new SparkMaxConfig();
     private final RelativeEncoder m_encoder = m_motor.getEncoder();
 
-    // @SuppressWarnings("removal")
     public InfeedSparkFlex() {
         m_config.idleMode(IdleMode.kCoast)
             .smartCurrentLimit(40)

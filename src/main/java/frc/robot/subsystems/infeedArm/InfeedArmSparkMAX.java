@@ -27,7 +27,7 @@ public class InfeedArmSparkMAX implements InfeedArm {
     private static final double kD = 0.0;
     private static final double kFF = 1.0 / 5676.0; // rough kV (1 / freeSpeedRpm)
 
-    public static final int MOTOR_ID = 10;
+    public static final int MOTOR_ID = 9;
 
     private double m_target = 0;
 

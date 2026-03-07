@@ -156,19 +156,19 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     private void setupDashboard() {
-        DashboardStore.add("X Velocity", () -> getChassisSpeeds().vxMetersPerSecond);
-        DashboardStore.add("Y Velocity", () -> getChassisSpeeds().vyMetersPerSecond);
-        DashboardStore.add("Angular Velocity", () -> getChassisSpeeds().omegaRadiansPerSecond);
+        DashboardStore.add("Drive/X Velocity", () -> getChassisSpeeds().vxMetersPerSecond);
+        DashboardStore.add("Drive/Y Velocity", () -> getChassisSpeeds().vyMetersPerSecond);
+        DashboardStore.add("Drive/Angular Velocity", () -> getChassisSpeeds().omegaRadiansPerSecond);
 
-        DashboardStore.add("X (meters)", () -> getRobotPoseEstimate().getX());
-        DashboardStore.add("Y (meters)", () -> getRobotPoseEstimate().getY());
+        DashboardStore.add("Drive/X Position", () -> getRobotPoseEstimate().getX());
+        DashboardStore.add("Drive/Y Position", () -> getRobotPoseEstimate().getY());
 
-        DashboardStore.add("FL Angle", () -> m_frontLeft.getPosition().angle.getDegrees());
-        DashboardStore.add("FR Angle", () -> m_frontRight.getPosition().angle.getDegrees());
-        DashboardStore.add("BL Angle", () -> m_rearLeft.getPosition().angle.getDegrees());
-        DashboardStore.add("BR Angle", () -> m_rearRight.getPosition().angle.getDegrees());
+        DashboardStore.add("Drive/Angle/FL", () -> m_frontLeft.getPosition().angle.getDegrees());
+        DashboardStore.add("Drive/Angle/FR", () -> m_frontRight.getPosition().angle.getDegrees());
+        DashboardStore.add("Drive/Angle/BL", () -> m_rearLeft.getPosition().angle.getDegrees());
+        DashboardStore.add("Drive/Angle/BR", () -> m_rearRight.getPosition().angle.getDegrees());
 
-        DashboardStore.add("Heading (deg)", () -> getHeading());
+        DashboardStore.add("Drive/Heading", () -> getHeading());
 
         DashboardStore.addCustom(() -> {
             m_field.setRobotPose(getRobotPoseEstimate());

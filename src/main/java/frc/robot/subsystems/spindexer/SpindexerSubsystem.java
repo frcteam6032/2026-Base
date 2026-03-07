@@ -8,9 +8,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final SpindexerMotor m_spindexer;
 
     public SpindexerSubsystem() {
-        // m_infeed = new InfeedSparkMAX();
-        // m_infeed = new InfeedTalonFX();
         m_spindexer = new SpindexerSparkMAX();
+
+        DashboardStore.add("Spindexer/Velocity", m_spindexer::getVelocityRPM);
+        DashboardStore.add("Spindexer/Current", m_spindexer::getSupplyCurrent);
     }
 
     private void runPercent(double percent) {
