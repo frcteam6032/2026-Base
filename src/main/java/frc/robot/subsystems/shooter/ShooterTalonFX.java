@@ -16,7 +16,7 @@ public class ShooterTalonFX implements ShooterMotor {
     private static final int LEADER_ID = 13;
     private static final int FOLLOWER_ID = 14;
 
-    private static final double kP = 0.0005;
+    private static final double kP = 0.01;
     private static final double kI = 0.0;
     private static final double kD = 0.0;
 
@@ -24,7 +24,6 @@ public class ShooterTalonFX implements ShooterMotor {
 
     private static final double kFF = 1.0 / 6380.0; // rough kV (1 / freeSpeedRpm)
 
-    // //
     private final CANBus kCANBus = CANBus.roboRIO();
 
     private final TalonFX m_leaderMotor = new TalonFX(LEADER_ID, kCANBus);
