@@ -26,6 +26,11 @@ public class ShooterSubsystem extends SubsystemBase {
     private final Limelight m_limelight;
     private final DriveSubsystem m_DriveSubsystem;
 
+    private static final double POINT_A_X = 8.0;
+    private static final double POINT_A_Y = 4.0;
+    private static final double POINT_B_X = 8.0;
+    private static final double POINT_B_Y = -4.0;
+
     private double m_vx = 0.0;
     private double m_vy = 0.0;
 
@@ -39,10 +44,10 @@ public class ShooterSubsystem extends SubsystemBase {
     private double m_target = 0.0;
 
     public ShooterSubsystem(Limelight limelight, DriveSubsystem drivetrain) {
-        m_shooter = new ShooterSparkMAX();
+        // m_shooter = new ShooterSparkMAX();
         m_limelight = limelight;
         m_DriveSubsystem = drivetrain;
-        // m_shooter = new ShooterTalonFX();
+        m_shooter = new ShooterTalonFX();
 
         setupDashboard();
     }
@@ -84,7 +89,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     }
 
-    private boolean isShotPlausible(double distanceMeters) {
+    private boolean isShotPlausible() {
         double offsetX = m_limelight.getXOffset();
         // If the x offset is large, we are prob looking at the edge or the vec proj is
         // not a chord
@@ -106,6 +111,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public double getPredictedDistanceMeters() {
 
         Optional<Pose3d> tagOpt = m_limelight.getFiducialPose3d();
+        if (tagOpt.isEmpty()) return -1;
 
         // Prevent small errs
         if (m_vx == 0.0 && m_vy == 0.0) {
@@ -128,11 +134,64 @@ public class ShooterSubsystem extends SubsystemBase {
         return Math.hypot(dx, dy);
     }
 
-    public ShooterTableEntry predictedTableEntry() {
+    public double predictedDistanceToPoint() {
+
+        Pose2d botPose = m_DriveSubsystem.getRobotPoseEstimate();
+        if (botPose == null) {
+            return 0.0;
+        }
+
+        double lookAhead = getDynamicLookAhead();
+
+        double rx = botPose.getX() + m_vx * lookAhead;
+        double ry = botPose.getY() + m_vy * lookAhead;
+        double heading = botPose.getRotation().getRadians();
+
+        double fx = Math.cos(heading);
+        double fy = Math.sin(heading);
+
+        // Dist vecs
+        double v1x = POINT_A_X - rx;
+        double v1y = POINT_A_Y - ry;
+        double v2x = POINT_B_X - rx;
+        double v2y = POINT_B_Y - ry;
+
+        // Use forward vec to compare which one is closer
+        double dot1 = v1x * fx + v1y * fy;
+        double dot2 = v2x * fx + v2y * fy;
+
+        double dist1 = Math.hypot(v1x, v1y);
+        double dist2 = Math.hypot(v2x, v2y);
+
+        // Infer which one is closer
+        if (dot1 >= 0.0 && dot2 < 0.0) {
+            return dist1;
+        } else if (dot2 >= 0.0 && dot1 < 0.0) {
+            return dist2;
+        } else {
+            if (Double.compare(dot1, dot2) > 0) {
+                return dist1;
+            } else if (Double.compare(dot2, dot1) > 0) {
+                return dist2;
+            } else {
+                return Math.min(dist1, dist2);
+            }
+        }
+
+    }
+
+    public ShooterTableEntry predictedTableEntryShooter() {
 
         double distance_prediction = getPredictedDistanceMeters();
 
-        return ShooterTable.calcShooterTableEntry(Meters.of(distance_prediction));
+        return ShooterTable.calcShooterTableEntryShooter(Meters.of(distance_prediction));
+    }
+
+    public ShooterTableEntry predictedTableEntryShuttle() {
+
+        double distance_prediction = predictedDistanceToPoint();
+
+        return ShooterTable.calcShooterTableEntryShuttle(Meters.of(distance_prediction));
     }
 
     public Command runShooterTableCommand(ShooterTableEntry entry) {
@@ -153,7 +212,15 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // Dynamic shooter
     public Command automaticShooter() {
-        ShooterTableEntry entry = predictedTableEntry();
+        ShooterTableEntry entry = predictedTableEntryShooter();
+        if (isShotPlausible()) {
+            return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
+        }
+        return run(() -> m_shooter.setVelocityRPM(0));
+    }
+
+    public Command automaticShuttle() {
+        ShooterTableEntry entry = predictedTableEntryShuttle();
         return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
     }
 

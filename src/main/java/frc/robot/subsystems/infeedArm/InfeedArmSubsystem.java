@@ -5,11 +5,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.DashboardStore;
 
 public class InfeedArmSubsystem extends SubsystemBase {
-    private final InfeedArm m_infeed;
+    public final InfeedArm m_infeed;
 
     enum Location {
         Stow(0),
-        Deploy(10);
+        Deploy(25);
 
         public int Position;
 
@@ -31,6 +31,10 @@ public class InfeedArmSubsystem extends SubsystemBase {
         DashboardStore.add("InfeedArm/Current", m_infeed::getSupplyCurrent);
         DashboardStore.add("InfeedArm/Position", m_infeed::getPosition);
         DashboardStore.add("InfeedArm/Target", () -> m_target);
+    }
+
+    public Command vbusCMD(double pct) {
+        return run(() -> m_infeed.setPercent(pct));
     }
 
     private void stop() {

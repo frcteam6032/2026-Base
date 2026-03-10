@@ -8,12 +8,13 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public class ShooterTalonFX implements ShooterMotor {
-    private static final int LEADER_ID = -1;
-    private static final int FOLLOWER_ID = -1;
+    private static final int LEADER_ID = 13;
+    private static final int FOLLOWER_ID = 14;
 
     private static final double kP = 0.0005;
     private static final double kI = 0.0;
@@ -43,7 +44,9 @@ public class ShooterTalonFX implements ShooterMotor {
         slot0Configs.kI = kI;
         slot0Configs.kD = kD;
         m_motorOutputCfg.NeutralMode = NeutralModeValue.Coast;
-        
+
+        m_motorCfg.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
         // apply all configs, 50 ms total timeout
         m_leaderMotor.getConfigurator().apply(m_motorCfg, TIMEOUT_SECONDS);
         m_followerMotor.getConfigurator().apply(m_motorCfg, TIMEOUT_SECONDS);

@@ -9,7 +9,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 public class SpindexerSparkMAX implements SpindexerMotor {
-    private static final int MOTOR_ID = -1;
+    private static final int MOTOR_ID = 11;
 
     private final SparkMax m_motor = new SparkMax(MOTOR_ID, MotorType.kBrushless);
     private final SparkMaxConfig m_config = new SparkMaxConfig();
@@ -37,7 +37,6 @@ public class SpindexerSparkMAX implements SpindexerMotor {
 
     @Override
     public double getSupplyCurrent() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSupplyCurrent'");
+        return m_motor.getOutputCurrent();
     }
 }

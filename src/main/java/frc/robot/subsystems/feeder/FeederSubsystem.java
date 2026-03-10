@@ -12,7 +12,7 @@ public class FeederSubsystem extends SubsystemBase {
 
         DashboardStore.add("Feeder/Velocity", m_feeder::getVelocityRPM);
         DashboardStore.add("Feeder/Current", m_feeder::getSupplyCurrent);
-   }
+    }
 
     private void runPercent(double percent) {
         m_feeder.setPercent(percent);

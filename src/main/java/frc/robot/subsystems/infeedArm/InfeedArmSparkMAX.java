@@ -22,12 +22,15 @@ import com.revrobotics.spark.FeedbackSensor;
  * present in this project.
  */
 public class InfeedArmSparkMAX implements InfeedArm {
-    private static final double kP = 0.01;
+    private static final double kP = 0.1;
     private static final double kI = 0.0;
     private static final double kD = 0.0;
     private static final double kFF = 1.0 / 5676.0; // rough kV (1 / freeSpeedRpm)
 
     public static final int MOTOR_ID = 9;
+
+    private static final double FORWARD_LIMIT = 28;
+    private static final double REVERSE_LIMIT = -2;
 
     private double m_target = 0;
 
@@ -41,9 +44,13 @@ public class InfeedArmSparkMAX implements InfeedArm {
     public InfeedArmSparkMAX() {
         m_ff.kV(kFF);
 
-        m_config.idleMode(IdleMode.kBrake)
+        m_config.idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(60)
                 .inverted(false);
+
+        m_config.softLimit
+                .forwardSoftLimit(FORWARD_LIMIT)
+                .reverseSoftLimit(REVERSE_LIMIT);
 
         m_config.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)

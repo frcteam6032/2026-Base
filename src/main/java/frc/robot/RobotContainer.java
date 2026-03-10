@@ -5,6 +5,7 @@ import java.util.function.DoubleSupplier;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.system.Discretization;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -24,6 +25,7 @@ import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
 
 public class RobotContainer {
+        private static final double SHOOTER_COAST = 0.1;
         // Create the robot's subsystems
         private final DriveSubsystem m_robotDrive = new DriveSubsystem();
         private final Limelight m_limelight = new Limelight();
@@ -32,6 +34,7 @@ public class RobotContainer {
         private final FeederSubsystem m_feeder = new FeederSubsystem();
         private final InfeedArmSubsystem m_infeedArm = new InfeedArmSubsystem();
         private final SpindexerSubsystem m_spindexer = new SpindexerSubsystem();
+        private DriveType m_driveType = DriveType.Normal;
 
         // Create the driver controller
         private final CommandXboxController m_driverController = new CommandXboxController(
@@ -41,8 +44,8 @@ public class RobotContainer {
                         OIConstants.OPERATOR_CONTROLLER);
 
         // COMMAND CONSTANTS //
-        private static final double INFEED_SPEED = 0.5;
-        private static final double FEEDER_SPEED = 0.5;
+        private static final double INFEED_SPEED = 0.7;
+        private static final double FEEDER_SPEED = 0.9;
         private static final double SPINDEXER_SPEED = 0.5;
         private static final double SHOOTER_SPIT_SPEED = 0.5;
 
@@ -91,6 +94,18 @@ public class RobotContainer {
                 SmartDashboard.putData("Auto Chooser", autoChooser);
         }
 
+        enum DriveType {
+                Normal(0),
+                Bump(1),
+                Alignment(2);
+
+                public int Type;
+
+                private DriveType(int value) {
+                        Type = value;
+                }
+        }
+
         private void configureButtonBindings() {
                 // DEFAULT COMMANDS //
                 m_robotDrive.setDefaultCommand(
@@ -103,7 +118,7 @@ public class RobotContainer {
                                                 m_robotDrive));
 
                 // shooter should always be running due to epic inertia
-                m_shooter.setDefaultCommand(m_shooter.runPercentCommand(() -> 0.3));
+                m_shooter.setDefaultCommand(m_shooter.runPercentCommand(() -> SHOOTER_COAST));
                 m_infeed.setDefaultCommand(m_infeed.stopCommand());
                 m_feeder.setDefaultCommand(m_feeder.stopCommand());
                 m_spindexer.setDefaultCommand(m_spindexer.stopCommand());
@@ -118,7 +133,8 @@ public class RobotContainer {
                 m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
 
                 // TESTING, PLEASE REMOVE //
-                m_driverController.x().whileTrue(m_shooter.runTargetCommand());
+                // m_driverController.x().whileTrue(m_shooter.runTargetCommand());
+                m_driverController.y().onTrue(m_robotDrive.readyBump()).onFalse(m_robotDrive.disableOverBump());
 
                 // ======== //
                 // OPERATOR //
@@ -134,17 +150,21 @@ public class RobotContainer {
                                                 .alongWith(m_robotDrive.visionRotateCommand(m_limelight,
                                                                 () -> -m_driverController.getLeftX(),
                                                                 () -> -m_driverController.getRightX())));
+
+                // m_operatorController.a().toggleOnTrue(m_shooter.automaticShuttle());
+
                 m_operatorController.b().toggleOnTrue(m_shooter.runPercentCommand(() -> SHOOTER_SPIT_SPEED));
 
                 // INFEED ARM, MANUAL OVERRIDES //
-                m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-10));
-                m_operatorController.rightTrigger().onTrue(m_infeedArm.bumpCommand(10));
+                m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
+                m_operatorController.rightTrigger().onTrue(m_infeedArm.bumpCommand(2.5));
 
                 // FEED TO SHOOTER //
-                m_driverController.y()
+                m_operatorController.y()
                                 .whileTrue(m_feeder.intakeCommand(FEEDER_SPEED)
                                                 .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)));
 
+                m_operatorController.a().whileTrue(m_feeder.intakeCommand(FEEDER_SPEED));
                 // OUTTAKE //
                 m_operatorController.leftBumper().whileTrue(
                                 m_infeed.intakeCommand(-INFEED_SPEED)

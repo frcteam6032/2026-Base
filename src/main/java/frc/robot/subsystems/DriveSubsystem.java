@@ -29,11 +29,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.ModuleConfig;
@@ -44,6 +46,9 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 public class DriveSubsystem extends SubsystemBase {
     public static final double ROTATE_kP = 0.22;
     public static final double ROTATE_kD = 0.006;
+
+    private boolean m_lockHeading = false;
+    private double m_lockedHeadingDegrees = 0.0;
     // private static final double ALIGNMENT_DEADBAND = 1.5;
     public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
             DriveSubsystem.ROTATE_kD);
@@ -203,6 +208,14 @@ public class DriveSubsystem extends SubsystemBase {
                     correctedTimestamp);
         }
 
+        if (m_lockHeading) {
+            Rotation2d targetRotation = Rotation2d.fromDegrees(m_lockedHeadingDegrees);
+            double offset = targetRotation.minus(getRotation2D()).getDegrees();
+            double rotCommand = controller.calculate(offset) / DriveConstants.kMaxAngularSpeed;
+            // Drive with zero translation and apply rotation correction (field relative)
+            joystickDrive(0.0, 0.0, rotCommand, true);
+        }
+
     }
 
     Rotation2d getRotation2D() {
@@ -294,6 +307,35 @@ public class DriveSubsystem extends SubsystemBase {
         m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         m_rearLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    }
+
+    public void disableHeadingLock() {
+        m_lockHeading = false;
+        controller.reset();
+    }
+
+    public void overBump() {
+        StatusSignal<Angle> headingSignal = m_gyro.getYaw();
+        double yaw = headingSignal.getValueAsDouble();
+
+        yaw = ((yaw % 360.0) + 360.0) % 360.0;
+
+        double deltaTo0 = Math.min(yaw, 360.0 - yaw);
+        double deltaTo180 = Math.min(Math.abs(yaw - 180.0), 360.0 - Math.abs(yaw - 180.0));
+
+        m_lockedHeadingDegrees = (deltaTo0 <= deltaTo180) ? 0.0 : 180.0;
+
+        m_lockHeading = true;
+        controller.reset();
+
+    }
+
+    public Command readyBump() {
+        return run(() -> overBump());
+    }
+
+    public Command disableOverBump() {
+        return runOnce(() -> disableHeadingLock());
     }
 
     public Command setXCommand() {
