@@ -3,11 +3,11 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
+import java.lang.constant.DirectMethodHandleDesc;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.Timer;
@@ -41,14 +41,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
 
-    private static final double SHOOTER_P = 2e-4;
-    private static final double SHOOTER_I = 0.0;
-    private static final double SHOOTER_D = 0.0;
-    private static final double SHOOTER_FF = 1.0 / 6000.0;
-
-    private final PIDController m_pidController = new PIDController(SHOOTER_P, SHOOTER_I, SHOOTER_D);
-
-    private double m_targetRPM = 0.0;
+    private double m_target = 0.0;
 
     public ShooterSubsystem(Limelight limelight, DriveSubsystem drivetrain) {
         // m_shooter = new ShooterSparkMAX();
@@ -56,17 +49,12 @@ public class ShooterSubsystem extends SubsystemBase {
         m_DriveSubsystem = drivetrain;
         m_shooter = new ShooterTalonFX();
 
-        m_pidController.setTolerance(50.0);
         setupDashboard();
     }
 
     private void setupDashboard() {
         DashboardStore.add("Shooter/RPM", this::getVelocityRPM);
-        DashboardStore.add("Shooter/PID/kP", () -> SHOOTER_P);
-        SmartDashboard.putNumber("Shooter/TargetRPM", 0.0);
-        SmartDashboard.putNumber("Shooter/PIDError", 0.0);
-        SmartDashboard.putNumber("Shooter/PIDOutput", 0.0);
-        SmartDashboard.putNumber("Shooter/SetpointRPM", 0.0);
+        SmartDashboard.putNumber("Shooter/Target", 0.0);
     }
 
     @Override
@@ -89,7 +77,7 @@ public class ShooterSubsystem extends SubsystemBase {
         m_lastPose = currentPose;
         m_lastTime = now;
 
-        m_targetRPM = SmartDashboard.getNumber("Shooter/TargetRPM", m_targetRPM);
+        m_target = SmartDashboard.getNumber("Shooter/Target", 0.0);
 
         final boolean shooterReady = m_limelight.targetValid();
         double distance = m_limelight.getDistance();
@@ -123,8 +111,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public double getPredictedDistanceMeters() {
 
         Optional<Pose3d> tagOpt = m_limelight.getFiducialPose3d();
-        if (tagOpt.isEmpty())
-            return -1;
+        if (tagOpt.isEmpty()) return -1;
 
         // Prevent small errs
         if (m_vx == 0.0 && m_vy == 0.0) {
@@ -208,7 +195,11 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public Command runShooterTableCommand(ShooterTableEntry entry) {
-        return runPidCommand(() -> entry.wheelSpeed.in(RPM));
+        return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
+    }
+
+    public Command runRPMCommand(double rpm) {
+        return run(() -> m_shooter.setVelocityRPM(rpm));
     }
 
     public Command runPercentCommand(DoubleSupplier percent) {
@@ -216,7 +207,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public Command runTargetCommand() {
-        return runPidCommand(() -> m_targetRPM);
+        return run(() -> m_shooter.setPercent(m_target));
     }
 
     public Command stopCommand() {
@@ -225,39 +216,19 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // Dynamic shooter
     public Command automaticShooter() {
+        ShooterTableEntry entry = predictedTableEntryShooter();
         if (isShotPlausible()) {
-            return runPidCommand(() -> predictedTableEntryShooter().wheelSpeed.in(RPM));
+            return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
         }
-        return stopCommand();
+        return run(() -> m_shooter.setVelocityRPM(0));
     }
 
     public Command automaticShuttle() {
-        return runPidCommand(() -> predictedTableEntryShuttle().wheelSpeed.in(RPM));
+        ShooterTableEntry entry = predictedTableEntryShuttle();
+        return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
     }
 
     public double getVelocityRPM() {
         return m_shooter.getVelocityRPM();
-    }
-
-    private Command runPidCommand(DoubleSupplier rpmSupplier) {
-        return runEnd(
-                () -> applyPidControl(rpmSupplier.getAsDouble()),
-                () -> {
-                    m_pidController.reset();
-                    m_shooter.stop();
-                    SmartDashboard.putNumber("Shooter/PIDOutput", 0.0);
-                });
-    }
-
-    private void applyPidControl(double targetRPM) {
-        double rpm = getVelocityRPM();
-        double pidOutput = m_pidController.calculate(rpm, targetRPM);
-        double feedforward = targetRPM * SHOOTER_FF;
-        double percent = MathUtil.clamp(pidOutput + feedforward, -1.0, 1.0);
-        m_shooter.setPercent(percent);
-
-        SmartDashboard.putNumber("Shooter/SetpointRPM", targetRPM);
-        SmartDashboard.putNumber("Shooter/PIDError", targetRPM - rpm);
-        SmartDashboard.putNumber("Shooter/PIDOutput", percent);
     }
 }

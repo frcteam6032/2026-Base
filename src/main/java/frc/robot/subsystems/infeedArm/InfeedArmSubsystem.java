@@ -63,18 +63,16 @@ public class InfeedArmSubsystem extends SubsystemBase {
         switch (m_currentPosition) {
             case Deploy:
                 m_currentPosition = Location.Stow;
-                m_target = Location.Stow.Position;
                 break;
             case Stow:
                 m_currentPosition = Location.Deploy;
-                m_target = Location.Deploy.Position;
                 break;
             default:
                 m_currentPosition = Location.Stow;
-                m_target = Location.Stow.Position;
                 break;
-
         }
+
+        m_target = m_currentPosition.Position;
     }
 
     public Command switchPositionCommand() {
