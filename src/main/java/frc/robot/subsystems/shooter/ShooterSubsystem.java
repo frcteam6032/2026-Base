@@ -111,7 +111,8 @@ public class ShooterSubsystem extends SubsystemBase {
     public double getPredictedDistanceMeters() {
 
         Optional<Pose3d> tagOpt = m_limelight.getFiducialPose3d();
-        if (tagOpt.isEmpty()) return -1;
+        if (tagOpt.isEmpty())
+            return -1;
 
         // Prevent small errs
         if (m_vx == 0.0 && m_vy == 0.0) {
@@ -132,6 +133,30 @@ public class ShooterSubsystem extends SubsystemBase {
         double dy = tagPose.getY() - predictedY;
 
         return Math.hypot(dx, dy);
+    }
+
+    public double predictedDistanceToHub() {
+        double x = -1;
+        double y = -1;
+
+        Pose2d botPose = m_DriveSubsystem.getRobotPoseEstimate();
+        if (botPose == null) {
+            return 0.0;
+        }
+
+        double lookAhead = getDynamicLookAhead();
+
+        double rx = botPose.getX() + m_vx * lookAhead;
+        double ry = botPose.getY() + m_vy * lookAhead;
+        double heading = botPose.getRotation().getRadians();
+
+        // Dist vecs
+        double v1x = x - rx;
+        double v1y = y - ry;
+
+        double dist1 = Math.hypot(v1x, v1y);
+
+        return dist1;
     }
 
     public double predictedDistanceToPoint() {
@@ -194,6 +219,11 @@ public class ShooterSubsystem extends SubsystemBase {
         return ShooterTable.calcShooterTableEntryShuttle(Meters.of(distance_prediction));
     }
 
+    public ShooterTableEntry predictedTableEntryHub(double dist) {
+
+        return ShooterTable.calcShooterTableEntryShooter(Meters.of(dist));
+    }
+
     public Command runShooterTableCommand(ShooterTableEntry entry) {
         return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
     }
@@ -225,6 +255,11 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command automaticShuttle() {
         ShooterTableEntry entry = predictedTableEntryShuttle();
+        return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
+    }
+
+    public Command automaticHubShooter(double dist) {
+        ShooterTableEntry entry = predictedTableEntryHub(dist);
         return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
     }
 

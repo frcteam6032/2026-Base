@@ -91,6 +91,9 @@ public class Robot extends TimedRobot {
 
         // feed the limelight every cycle
         m_robotContainer.feedLimelight();
+
+        // Continuously refresh shot prediction
+        m_robotContainer.updateShotPrediction();
     }
 
     /** This function is called once each time the robot enters Disabled mode. */

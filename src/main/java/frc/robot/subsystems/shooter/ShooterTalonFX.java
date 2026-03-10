@@ -45,7 +45,7 @@ public class ShooterTalonFX implements ShooterMotor {
         slot0Configs.kD = kD;
         m_motorOutputCfg.NeutralMode = NeutralModeValue.Coast;
 
-        m_motorCfg.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        m_motorCfg.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
         // apply all configs, 50 ms total timeout
         m_leaderMotor.getConfigurator().apply(m_motorCfg, TIMEOUT_SECONDS);

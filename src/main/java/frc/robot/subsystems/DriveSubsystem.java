@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
@@ -448,6 +450,10 @@ public class DriveSubsystem extends SubsystemBase {
      * @return A command that rotates according to the vision system's offset.
      */
     public Command visionRotateCommand(Limelight vision, DoubleSupplier xSpeed, DoubleSupplier ySpeed) {
+
+        // If the offset is less than 10, move to the right by some angle
+        // If the offset is greater than 10, move to the left by some angle
+        // If the angle is between -10 and 10
         return rotateOffsetCommand(xSpeed, ySpeed, () -> Rotation2d.fromDegrees(-vision.getXOffset()),
                 vision::targetValid);
     }
