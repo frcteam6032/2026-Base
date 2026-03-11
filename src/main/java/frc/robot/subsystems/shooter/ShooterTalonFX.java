@@ -6,23 +6,25 @@ import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VelocityDutyCycle;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 public class ShooterTalonFX implements ShooterMotor {
     private static final int LEADER_ID = 13;
     private static final int FOLLOWER_ID = 14;
 
-    private static final double kP = 0.01;
+    private static final double kP = 0.2;
     private static final double kI = 0.0;
     private static final double kD = 0.0;
 
     private static final double TIMEOUT_SECONDS = 0.050;
 
-    private static final double kFF = 1.0 / 6380.0; // rough kV (1 / freeSpeedRpm)
+    private static final double kFF = 12.0 / 106.3333; // rough kV (1 / freeSpeedRpm)
 
     private final CANBus kCANBus = CANBus.roboRIO();
 
@@ -32,7 +34,7 @@ public class ShooterTalonFX implements ShooterMotor {
     private final TalonFXConfiguration m_motorCfg = new TalonFXConfiguration();
     private final MotorOutputConfigs m_motorOutputCfg = m_motorCfg.MotorOutput;
 
-    private final VelocityDutyCycle m_request = new VelocityDutyCycle(0.0);
+    private final VelocityVoltage m_request = new VelocityVoltage(0.0);
     private final Follower m_followerRequest = new Follower(LEADER_ID, MotorAlignmentValue.Opposed);
 
     ShooterTalonFX() {
@@ -59,6 +61,7 @@ public class ShooterTalonFX implements ShooterMotor {
 
     @Override
     public void setVelocityRPM(double rpm) {
+        SmartDashboard.putNumber("Shooter/Target REAL", rpm);
         m_leaderMotor.setControl(m_request.withVelocity(rpm / 60));
         m_followerMotor.setControl(m_followerRequest);
     }

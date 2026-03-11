@@ -48,9 +48,9 @@ public class RobotContainer {
                         OIConstants.OPERATOR_CONTROLLER);
 
         // COMMAND CONSTANTS //
-        private static final double INFEED_SPEED = 0.7;
+        private static final double INFEED_SPEED = 0.75;
         private static final double FEEDER_SPEED = 0.9;
-        private static final double SPINDEXER_SPEED = 0.5;
+        private static final double SPINDEXER_SPEED = 0.9;
         private static final double SHOOTER_SPIT_SPEED = 3200;
 
         private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d());
@@ -62,13 +62,13 @@ public class RobotContainer {
         private double m_vy = 0.0;
         private static final double kVelSmoothingAlpha = 0.2;
 
-        private Pose2d m_predictedPose = null;
-        private Pair<Double, Rotation2d> m_currentHubAlignment;
+        private Pose2d m_predictedPose = new Pose2d();
+        private Pair<Double, Rotation2d> m_currentHubAlignment = new Pair<Double, Rotation2d>(0.0, new Rotation2d());
         private boolean m_hasPrediction = false;
 
         private static final double kLookAheadBase = 0.1; // seconds
         private static final double kLookAheadMax = 0.3; // seconds
-       // private static final double kTransKp = 0.6;
+        // private static final double kTransKp = 0.6;
         private static final double kRotKp = 0.015;
 
         // AUTO/DRIVER STUFF //
