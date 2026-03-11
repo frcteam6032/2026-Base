@@ -10,6 +10,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -34,7 +35,7 @@ public class RobotContainer {
         // Create the robot's subsystems
         private final DriveSubsystem m_robotDrive = new DriveSubsystem();
         private final Limelight m_limelight = new Limelight();
-        private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight, m_robotDrive);
+        private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight);
         private final InfeedSubsystem m_infeed = new InfeedSubsystem();
         private final FeederSubsystem m_feeder = new FeederSubsystem();
         private final InfeedArmSubsystem m_infeedArm = new InfeedArmSubsystem();
@@ -53,7 +54,14 @@ public class RobotContainer {
         private static final double SPINDEXER_SPEED = 0.9;
         private static final double SHOOTER_SPIT_SPEED = 3200;
 
-        private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d());
+        // Update these and make sure to account for red or blue alliance4
+        // From orientation of the blue alliance
+        // private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.620, 4.030, new
+        // Rotation2d()); // Good
+        // private static final Pose2d SHUTTLE_TARGET_POSE1 = new Pose2d(1.490, 1.053,
+        // new Rotation2d()); // Good
+        // private static final Pose2d SHUTTLE_TARGET_POSE2 = new Pose2d(2.0, 7.0, new
+        // Rotation2d());
 
         // Prediction state
         private Pose2d m_lastPose = null;
@@ -64,6 +72,8 @@ public class RobotContainer {
 
         private Pose2d m_predictedPose = new Pose2d();
         private Pair<Double, Rotation2d> m_currentHubAlignment = new Pair<Double, Rotation2d>(0.0, new Rotation2d());
+        private Pair<Double, Rotation2d> m_currentShuttleAlignment = new Pair<Double, Rotation2d>(0.0,
+                        new Rotation2d());
         private boolean m_hasPrediction = false;
 
         private static final double kLookAheadBase = 0.1; // seconds
@@ -189,9 +199,14 @@ public class RobotContainer {
                                                 .alongWith(m_shooter.automaticHubShooter(
                                                                 m_currentHubAlignment.getFirst())));
 
+                m_operatorController.rightBumper()
+                                .whileTrue(pointToSelectedShuttlePosition(getXSpeed(), getYSpeed())
+                                                .alongWith(m_shooter.automaticShuttle(
+                                                                m_currentShuttleAlignment.getFirst())));
+
                 // m_operatorController.a().toggleOnTrue(m_shooter.automaticShuttle());
 
-                m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+                m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
 
                 // INFEED ARM, MANUAL OVERRIDES //
                 m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
@@ -233,6 +248,11 @@ public class RobotContainer {
                 return Math.min(lookAhead, kLookAheadMax);
         }
 
+        public Pose2d convertToRedAlliance(Pose2d pose) {
+                double fieldWidth = 16.54;
+                return new Pose2d(fieldWidth - pose.getX(), pose.getY(), pose.getRotation());
+        }
+
         public void updateShotPrediction() {
                 Pose2d currentPose = m_robotDrive.getRobotPoseEstimate();
                 double now = Timer.getFPGATimestamp();
@@ -256,8 +276,14 @@ public class RobotContainer {
                                 currentPose.getY() + m_vy * lookAhead,
                                 currentPose.getRotation());
 
-                double dx = HUB_TARGET_POSE.getX() - m_predictedPose.getX();
-                double dy = HUB_TARGET_POSE.getY() - m_predictedPose.getY();
+                Pose2d HubPose = new Pose2d(4.620, 4.030, new Rotation2d()); // Good
+
+                if (GameData.getIsRed()) {
+                        HubPose = convertToRedAlliance(HubPose);
+                }
+
+                double dx = HubPose.getX() - m_predictedPose.getX();
+                double dy = HubPose.getY() - m_predictedPose.getY();
 
                 double distance = Math.hypot(dx, dy);
                 double angleToPoint = Math.toDegrees(Math.atan2(dy, dx));
@@ -272,6 +298,72 @@ public class RobotContainer {
                         // updateShotPrediction();
 
                         double rotCmd = MathUtil.clamp(m_currentHubAlignment.getSecond().getDegrees() * kRotKp, -1.0,
+                                        1.0);
+
+                        m_robotDrive.joystickDrive(xSpeed, ySpeed, rotCmd, true);
+                }, m_robotDrive);
+        }
+
+        public void updateShuttlePrediction() {
+                Pose2d currentPose = m_robotDrive.getRobotPoseEstimate();
+                double now = Timer.getFPGATimestamp();
+
+                if (m_lastPose != null && (now - m_lastTime) > 1e-6) {
+                        double dt = now - m_lastTime;
+                        double rawVx = (currentPose.getX() - m_lastPose.getX()) / dt;
+                        double rawVy = (currentPose.getY() - m_lastPose.getY()) / dt;
+
+                        m_vx = kVelSmoothingAlpha * rawVx + (1.0 - kVelSmoothingAlpha) * m_vx;
+                        m_vy = kVelSmoothingAlpha * rawVy + (1.0 - kVelSmoothingAlpha) * m_vy;
+                }
+
+                m_lastPose = currentPose;
+                m_lastTime = now;
+
+                double lookAhead = getDynamicLookAhead();
+
+                m_predictedPose = new Pose2d(
+                                currentPose.getX() + m_vx * lookAhead,
+                                currentPose.getY() + m_vy * lookAhead,
+                                currentPose.getRotation());
+
+                Pose2d ShuttleTarget1 = new Pose2d(1.490, 1.053, new Rotation2d()); // Good
+                Pose2d ShuttleTarget2 = new Pose2d(2.0, 7.0, new Rotation2d()); // Good
+
+                if (GameData.getIsRed()) {
+                        ShuttleTarget1 = convertToRedAlliance(ShuttleTarget1);
+                        ShuttleTarget2 = convertToRedAlliance(ShuttleTarget2);
+                }
+
+                // Determine which shuttle target is closer
+                Pose2d targetPose = ShuttleTarget1;
+                double dx1 = ShuttleTarget1.getX() - m_predictedPose.getX();
+                double dy1 = ShuttleTarget1.getY() - m_predictedPose.getY();
+                double dist1 = Math.hypot(dx1, dy1);
+
+                double dx2 = ShuttleTarget2.getX() - m_predictedPose.getX();
+                double dy2 = ShuttleTarget2.getY() - m_predictedPose.getY();
+                double dist2 = Math.hypot(dx2, dy2);
+
+                if (dist2 < dist1) {
+                        targetPose = ShuttleTarget2;
+                        dx1 = dx2;
+                        dy1 = dy2;
+                }
+
+                double angleToPoint = Math.toDegrees(Math.atan2(dy1, dx1));
+                double angleDelta = angleToPoint - currentPose.getRotation().getDegrees();
+
+                m_currentShuttleAlignment = new Pair<Double, Rotation2d>(Math.hypot(dx1, dy1),
+                                Rotation2d.fromDegrees(angleDelta));
+        }
+
+        public Command pointToSelectedShuttlePosition(double xSpeed, double ySpeed) {
+                return Commands.run(() -> {
+                        // updateShotPrediction();
+
+                        double rotCmd = MathUtil.clamp(m_currentShuttleAlignment.getSecond().getDegrees() * kRotKp,
+                                        -1.0,
                                         1.0);
 
                         m_robotDrive.joystickDrive(xSpeed, ySpeed, rotCmd, true);

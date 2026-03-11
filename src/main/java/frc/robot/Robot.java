@@ -94,6 +94,7 @@ public class Robot extends TimedRobot {
 
         // Continuously refresh shot prediction
         m_robotContainer.updateShotPrediction();
+        m_robotContainer.updateShuttlePrediction();
     }
 
     /** This function is called once each time the robot enters Disabled mode. */
