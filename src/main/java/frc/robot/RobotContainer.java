@@ -10,6 +10,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -53,22 +54,13 @@ public class RobotContainer {
         private static final double SPINDEXER_SPEED = 0.9;
         private static final double SHOOTER_SPIT_SPEED = 3200;
 
-        private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d());
-
-        // Prediction state
-        private Pose2d m_lastPose = null;
-        private double m_lastTime = -1.0;
-        private double m_vx = 0.0;
-        private double m_vy = 0.0;
-        private static final double kVelSmoothingAlpha = 0.2;
-
-        private Pose2d m_predictedPose = new Pose2d();
-        private Pair<Double, Rotation2d> m_currentHubAlignment = new Pair<Double, Rotation2d>(0.0, new Rotation2d());
-        private boolean m_hasPrediction = false;
-
-        private static final double kLookAheadBase = 0.1; // seconds
-        private static final double kLookAheadMax = 0.3; // seconds
+        private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d()); // GOOD
+        private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 0.75, new Rotation2d()); // FIX
+        private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, -0.75, new Rotation2d()); // FIX
         // private static final double kTransKp = 0.6;
+
+        private double m_targetDistance = 0.0;
+
         private static final double kRotKp = 0.015;
 
         // AUTO/DRIVER STUFF //
@@ -96,8 +88,8 @@ public class RobotContainer {
         }
 
         public Command alignAndShootCommand() {
-                Command cmd = driveToPredictedHubPointCommand(getXSpeed(), getYSpeed())
-                                .alongWith(m_shooter.automaticHubShooter(m_currentHubAlignment.getFirst()))
+                Command cmd = pointAtHubCommand(getXSpeed(), getYSpeed())
+                                .alongWith(m_shooter.automaticHubShooter(m_targetDistance))
                                 .alongWith(m_feeder.intakeCommand(FEEDER_SPEED))
                                 .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED));
                 return cmd;
@@ -185,9 +177,9 @@ public class RobotContainer {
                 // SHOOTER //
 
                 m_operatorController.x().whileTrue(
-                                driveToPredictedHubPointCommand(getXSpeed(), getYSpeed())
+                                pointAtHubCommand(getXSpeed(), getYSpeed())
                                                 .alongWith(m_shooter.automaticHubShooter(
-                                                                m_currentHubAlignment.getFirst())));
+                                                                m_targetDistance)));
 
                 // m_operatorController.a().toggleOnTrue(m_shooter.automaticShuttle());
 
@@ -227,54 +219,44 @@ public class RobotContainer {
                 m_limelight.setRobotOrientation(m_robotDrive.getHeading());
         }
 
-        private double getDynamicLookAhead() {
-                double speed = Math.hypot(m_vx, m_vy);
-                double lookAhead = kLookAheadBase + speed * 0.01;
-                return Math.min(lookAhead, kLookAheadMax);
+        public Translation2d twistToLocation(Pose2d targetPose) {
+                // Get the angle and distance to the target pose from the active bot pose
+                var robotPose = m_robotDrive.getRobotPoseEstimate();
+                var deltaX = targetPose.getX() - robotPose.getX();
+                var deltaY = targetPose.getY() - robotPose.getY();
+                var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                var angleToTarget = Math.toDegrees(Math.atan2(deltaY, deltaX));
+                Rotation2d angleDelta = Rotation2d.fromDegrees(angleToTarget - robotPose.getRotation().getDegrees());
+                return new Translation2d(distance, angleDelta);
         }
 
-        public void updateShotPrediction() {
-                Pose2d currentPose = m_robotDrive.getRobotPoseEstimate();
-                double now = Timer.getFPGATimestamp();
+        public Pose2d decideShuttleSpot() {
+                Translation2d shuttle1Twist = twistToLocation(SHUTTLE_POSE_1);
+                Translation2d shuttle2Twist = twistToLocation(SHUTTLE_POSE_2);
 
-                if (m_lastPose != null && (now - m_lastTime) > 1e-6) {
-                        double dt = now - m_lastTime;
-                        double rawVx = (currentPose.getX() - m_lastPose.getX()) / dt;
-                        double rawVy = (currentPose.getY() - m_lastPose.getY()) / dt;
-
-                        m_vx = kVelSmoothingAlpha * rawVx + (1.0 - kVelSmoothingAlpha) * m_vx;
-                        m_vy = kVelSmoothingAlpha * rawVy + (1.0 - kVelSmoothingAlpha) * m_vy;
+                // Get the distance from the robot pose to each shuttle and pick the closer one
+                if (shuttle1Twist.getX() < shuttle2Twist.getX()) {
+                        return SHUTTLE_POSE_1;
+                } else {
+                        return SHUTTLE_POSE_2;
                 }
 
-                m_lastPose = currentPose;
-                m_lastTime = now;
-
-                double lookAhead = getDynamicLookAhead();
-
-                m_predictedPose = new Pose2d(
-                                currentPose.getX() + m_vx * lookAhead,
-                                currentPose.getY() + m_vy * lookAhead,
-                                currentPose.getRotation());
-
-                double dx = HUB_TARGET_POSE.getX() - m_predictedPose.getX();
-                double dy = HUB_TARGET_POSE.getY() - m_predictedPose.getY();
-
-                double distance = Math.hypot(dx, dy);
-                double angleToPoint = Math.toDegrees(Math.atan2(dy, dx));
-                double angleDelta = angleToPoint - currentPose.getRotation().getDegrees();
-
-                m_currentHubAlignment = new Pair<Double, Rotation2d>(distance, Rotation2d.fromDegrees(angleDelta));
-                m_hasPrediction = true;
         }
 
-        public Command driveToPredictedHubPointCommand(double xSpeed, double ySpeed) {
+        public Command pointAtHubCommand(double x, double y) {
                 return Commands.run(() -> {
-                        // updateShotPrediction();
+                        Translation2d twist = twistToLocation(HUB_TARGET_POSE);
+                        m_targetDistance = twist.getX();
+                        m_robotDrive.drive(x, y, kRotKp * twist.getAngle().getDegrees(), true);
+                }, m_robotDrive);
+        }
 
-                        double rotCmd = MathUtil.clamp(m_currentHubAlignment.getSecond().getDegrees() * kRotKp, -1.0,
-                                        1.0);
-
-                        m_robotDrive.joystickDrive(xSpeed, ySpeed, rotCmd, true);
+        public Command pointToBestShuttleCommand(double x, double y) {
+                return Commands.run(() -> {
+                        Pose2d targetPose = decideShuttleSpot();
+                        Translation2d shuttleTwist = twistToLocation(targetPose);
+                        m_targetDistance = shuttleTwist.getX();
+                        m_robotDrive.drive(x, y, kRotKp * shuttleTwist.getAngle().getDegrees(), true);
                 }, m_robotDrive);
         }
 
