@@ -121,24 +121,6 @@ public class RobotContainer {
                 SmartDashboard.putData("Auto Chooser", autoChooser);
         }
 
-        public Pair<Double, Rotation2d> getDistAndAnglePoint(double x, double y) {
-                // Use odometry to calculate vector to a point from the robot pose
-                var robotPose = m_robotDrive.getRobotPoseEstimate();
-                var robotX = robotPose.getX();
-                var robotY = robotPose.getY();
-                var robotAngle = robotPose.getRotation().getDegrees();
-
-                var deltaX = x - robotX;
-                var deltaY = y - robotY;
-
-                var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                var angleToPoint = Math.toDegrees(Math.atan2(deltaY, deltaX));
-
-                var angleDelta = angleToPoint - robotAngle;
-
-                return new Pair<Double, Rotation2d>(distance, Rotation2d.fromDegrees(angleDelta));
-
-        }
 
         private void configureButtonBindings() {
                 // DEFAULT COMMANDS //
