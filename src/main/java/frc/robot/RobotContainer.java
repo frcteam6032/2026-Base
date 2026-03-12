@@ -1,7 +1,5 @@
 package frc.robot;
 
-import javax.xml.xpath.XPath;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -10,7 +8,6 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -31,6 +28,11 @@ import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
 
 public class RobotContainer {
+        private enum PredictionTarget {
+                HUB,
+                SHUTTLE
+        }
+
         private static final double SHOOTER_COAST = 0.1;
         // Create the robot's subsystems
         private final DriveSubsystem m_robotDrive = new DriveSubsystem();
@@ -75,11 +77,16 @@ public class RobotContainer {
         private Pair<Double, Rotation2d> m_currentShuttleAlignment = new Pair<Double, Rotation2d>(0.0,
                         new Rotation2d());
         private boolean m_hasPrediction = false;
+        private PredictionTarget m_lastPredictionTarget = null;
+        private double m_lastPredictionUpdateTime = -1.0;
 
         private static final double kLookAheadBase = 0.1; // seconds
         private static final double kLookAheadMax = 0.3; // seconds
+        private static final double kPredictionUpdatePeriod = 0.05; // seconds
+        private static final double kLimelightOrientationFeedPeriod = 0.05; // seconds
         // private static final double kTransKp = 0.6;
         private static final double kRotKp = 0.015;
+        private double m_lastLimelightFeedTime = -1.0;
 
         // AUTO/DRIVER STUFF //
         private SendableChooser<Command> autoChooser;
@@ -239,7 +246,12 @@ public class RobotContainer {
          * Feed the current angle of the drivetrain into the Limelight.
          */
         public void feedLimelight() {
+                double now = Timer.getFPGATimestamp();
+                if (m_lastLimelightFeedTime > 0.0 && now - m_lastLimelightFeedTime < kLimelightOrientationFeedPeriod) {
+                        return;
+                }
                 m_limelight.setRobotOrientation(m_robotDrive.getHeading());
+                m_lastLimelightFeedTime = now;
         }
 
         private double getDynamicLookAhead() {
@@ -253,7 +265,7 @@ public class RobotContainer {
                 return new Pose2d(fieldWidth - pose.getX(), pose.getY(), pose.getRotation());
         }
 
-        public void updateShotPrediction() {
+        private void updatePredictionState() {
                 Pose2d currentPose = m_robotDrive.getRobotPoseEstimate();
                 double now = Timer.getFPGATimestamp();
 
@@ -275,6 +287,11 @@ public class RobotContainer {
                                 currentPose.getX() + m_vx * lookAhead,
                                 currentPose.getY() + m_vy * lookAhead,
                                 currentPose.getRotation());
+        }
+
+        public void updateShotPrediction() {
+                updatePredictionState();
+                Pose2d currentPose = m_robotDrive.getRobotPoseEstimate();
 
                 Pose2d HubPose = new Pose2d(4.620, 4.030, new Rotation2d()); // Good
 
@@ -291,11 +308,31 @@ public class RobotContainer {
 
                 m_currentHubAlignment = new Pair<Double, Rotation2d>(distance, Rotation2d.fromDegrees(angleDelta));
                 m_hasPrediction = true;
+                m_lastPredictionTarget = PredictionTarget.HUB;
+                m_lastPredictionUpdateTime = Timer.getFPGATimestamp();
+        }
+
+        private void refreshPredictionIfNeeded(PredictionTarget target) {
+                double now = Timer.getFPGATimestamp();
+                boolean targetChanged = m_lastPredictionTarget != target;
+                boolean predictionStale = !m_hasPrediction
+                                || m_lastPredictionUpdateTime < 0.0
+                                || (now - m_lastPredictionUpdateTime) >= kPredictionUpdatePeriod;
+
+                if (!targetChanged && !predictionStale) {
+                        return;
+                }
+
+                if (target == PredictionTarget.HUB) {
+                        updateShotPrediction();
+                } else {
+                        updateShuttlePrediction();
+                }
         }
 
         public Command driveToPredictedHubPointCommand(double xSpeed, double ySpeed) {
                 return Commands.run(() -> {
-                        // updateShotPrediction();
+                        refreshPredictionIfNeeded(PredictionTarget.HUB);
 
                         double rotCmd = MathUtil.clamp(m_currentHubAlignment.getSecond().getDegrees() * kRotKp, -1.0,
                                         1.0);
@@ -305,27 +342,8 @@ public class RobotContainer {
         }
 
         public void updateShuttlePrediction() {
+                updatePredictionState();
                 Pose2d currentPose = m_robotDrive.getRobotPoseEstimate();
-                double now = Timer.getFPGATimestamp();
-
-                if (m_lastPose != null && (now - m_lastTime) > 1e-6) {
-                        double dt = now - m_lastTime;
-                        double rawVx = (currentPose.getX() - m_lastPose.getX()) / dt;
-                        double rawVy = (currentPose.getY() - m_lastPose.getY()) / dt;
-
-                        m_vx = kVelSmoothingAlpha * rawVx + (1.0 - kVelSmoothingAlpha) * m_vx;
-                        m_vy = kVelSmoothingAlpha * rawVy + (1.0 - kVelSmoothingAlpha) * m_vy;
-                }
-
-                m_lastPose = currentPose;
-                m_lastTime = now;
-
-                double lookAhead = getDynamicLookAhead();
-
-                m_predictedPose = new Pose2d(
-                                currentPose.getX() + m_vx * lookAhead,
-                                currentPose.getY() + m_vy * lookAhead,
-                                currentPose.getRotation());
 
                 Pose2d ShuttleTarget1 = new Pose2d(1.490, 1.053, new Rotation2d()); // Good
                 Pose2d ShuttleTarget2 = new Pose2d(2.0, 7.0, new Rotation2d()); // Good
@@ -336,7 +354,6 @@ public class RobotContainer {
                 }
 
                 // Determine which shuttle target is closer
-                Pose2d targetPose = ShuttleTarget1;
                 double dx1 = ShuttleTarget1.getX() - m_predictedPose.getX();
                 double dy1 = ShuttleTarget1.getY() - m_predictedPose.getY();
                 double dist1 = Math.hypot(dx1, dy1);
@@ -346,7 +363,6 @@ public class RobotContainer {
                 double dist2 = Math.hypot(dx2, dy2);
 
                 if (dist2 < dist1) {
-                        targetPose = ShuttleTarget2;
                         dx1 = dx2;
                         dy1 = dy2;
                 }
@@ -356,11 +372,14 @@ public class RobotContainer {
 
                 m_currentShuttleAlignment = new Pair<Double, Rotation2d>(Math.hypot(dx1, dy1),
                                 Rotation2d.fromDegrees(angleDelta));
+                m_hasPrediction = true;
+                m_lastPredictionTarget = PredictionTarget.SHUTTLE;
+                m_lastPredictionUpdateTime = Timer.getFPGATimestamp();
         }
 
         public Command pointToSelectedShuttlePosition(double xSpeed, double ySpeed) {
                 return Commands.run(() -> {
-                        // updateShotPrediction();
+                        refreshPredictionIfNeeded(PredictionTarget.SHUTTLE);
 
                         double rotCmd = MathUtil.clamp(m_currentShuttleAlignment.getSecond().getDegrees() * kRotKp,
                                         -1.0,

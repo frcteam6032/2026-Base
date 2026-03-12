@@ -28,6 +28,9 @@ public class ShooterSubsystem extends SubsystemBase {
     public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
 
     private double m_target = 0.0;
+    private boolean m_shooterReady = false;
+    private double m_distance = -1.0;
+    private double m_xOffset = 0.0;
 
     public ShooterSubsystem(Limelight limelight) {
         // m_shooter = new ShooterSparkMAX();
@@ -39,6 +42,9 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private void setupDashboard() {
         DashboardStore.add("Shooter/RPM", this::getVelocityRPM);
+        DashboardStore.add("shooter/Shooter Ready", () -> m_shooterReady);
+        DashboardStore.add("shooter/Distance", () -> m_distance);
+        DashboardStore.add("shooter/Offset", () -> m_xOffset);
         SmartDashboard.putNumber("Shooter/Target", 0.0);
     }
 
@@ -46,13 +52,9 @@ public class ShooterSubsystem extends SubsystemBase {
     public void periodic() {
         m_target = SmartDashboard.getNumber("Shooter/Target", 0.0);
 
-        final boolean shooterReady = m_limelight.targetValid();
-        double distance = m_limelight.getDistance();
-        double xOffset = m_limelight.getXOffset();
-
-        DashboardStore.add("shooter/Shooter Ready", () -> shooterReady);
-        DashboardStore.add("shooter/Distance", () -> distance);
-        DashboardStore.add("shooter/Offset", () -> xOffset);
+        m_shooterReady = m_limelight.targetValid();
+        m_distance = m_limelight.getDistance();
+        m_xOffset = m_limelight.getXOffset();
 
     }
 
