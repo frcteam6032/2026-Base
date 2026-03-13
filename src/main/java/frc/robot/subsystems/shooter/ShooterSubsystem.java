@@ -148,7 +148,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         double rx = botPose.getX() + m_vx * lookAhead;
         double ry = botPose.getY() + m_vy * lookAhead;
-        double heading = botPose.getRotation().getRadians();
+        // double heading = botPose.getRotation().getRadians();
 
         // Dist vecs
         double v1x = x - rx;
