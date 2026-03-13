@@ -29,7 +29,6 @@ public class Limelight {
      * Creates a new Limelight.
      */
     public Limelight() {
-        // TODO: WPILib doesn't have 2026 field yet. It should be in 2026.1.2
         // cc: https://git.crueter.xyz/mirror/allwpilib/commit/18249badc0
         m_layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     }
