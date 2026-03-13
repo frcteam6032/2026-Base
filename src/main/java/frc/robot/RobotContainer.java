@@ -58,8 +58,8 @@ public class RobotContainer {
         private static final double SHOOTER_SPIT_SPEED = 1500;
 
         private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d()); // GOOD
-        private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 0.75, new Rotation2d()); // FIX
-        private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, -0.75, new Rotation2d()); // FIX
+        private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 1.0, new Rotation2d()); // GOOD
+        private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, -7.0, new Rotation2d()); // GOOD
         // private static final double kTransKp = 0.6;
 
         private double m_targetDistance = 0.0;
@@ -208,7 +208,16 @@ public class RobotContainer {
                 m_limelight.setRobotOrientation(m_robotDrive.getHeading());
         }
 
+        public Pose2d convertToRed(Pose2d pose) {
+                double fieldLength = 16.54; // meters
+                return new Pose2d(fieldLength - pose.getX(), pose.getY(), pose.getRotation().times(-1));
+        }
+
         public Translation2d twistToLocation(Pose2d targetPose) {
+                if (GameData.getIsRed()) {
+                        targetPose = convertToRed(targetPose);
+                }
+
                 Pose2d robotPose = m_robotDrive.getRobotPoseEstimate();
 
                 ChassisSpeeds speeds = m_robotDrive.getChassisSpeeds();
