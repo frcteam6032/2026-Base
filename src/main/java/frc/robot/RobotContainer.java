@@ -35,7 +35,7 @@ public class RobotContainer {
         // Create the robot's subsystems
         private final DriveSubsystem m_robotDrive = new DriveSubsystem();
         private final Limelight m_limelight = new Limelight();
-        private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight, m_robotDrive);
+        private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight);
         private final InfeedSubsystem m_infeed = new InfeedSubsystem();
         private final FeederSubsystem m_feeder = new FeederSubsystem();
         private final InfeedArmSubsystem m_infeedArm = new InfeedArmSubsystem();
@@ -128,7 +128,7 @@ public class RobotContainer {
                                                 () -> m_robotDrive.joystickDrive(
                                                                 getXSpeed() * GameData.shouldInvertControls(),
                                                                 getYSpeed() * GameData.shouldInvertControls(),
-                                                                getRotationSpeed(),
+                                                                -getRotationSpeed(),
                                                                 true),
                                                 m_robotDrive));
 

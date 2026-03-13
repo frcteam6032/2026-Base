@@ -12,21 +12,15 @@ public final class Configs {
         public static final class MAXSwerveModule {
                 public static final SparkMaxConfig drivingConfig = new SparkMaxConfig();
                 public static final SparkMaxConfig turningConfig = new SparkMaxConfig();
-                public static final SparkMaxConfig elevatorConfig = new SparkMaxConfig();
 
                 static {
                         // Use module constants to calculate conversion factors and feed forward gain.
                         double drivingFactor = ModuleConstants.kWheelDiameterMeters * Math.PI
                                         / ModuleConstants.kDrivingMotorReduction;
                         double turningFactor = 2 * Math.PI;
-                        double drivingVelocityFeedForward = 1 / ModuleConstants.kDriveWheelFreeSpeedRps;
+                        double drivingVelocityFeedForward = 11.55 / ModuleConstants.kDriveWheelFreeSpeedRps;
                         // TODO: get kS and such
                         FeedForwardConfig drivingFFConfig = new FeedForwardConfig().kV(drivingVelocityFeedForward);
-
-                        elevatorConfig
-                                        .idleMode(IdleMode.kBrake)
-                                        .smartCurrentLimit(50)
-                                        .inverted(false);
 
                         drivingConfig
                                         .idleMode(IdleMode.kBrake)
@@ -38,7 +32,8 @@ public final class Configs {
                         drivingConfig.closedLoop
                                         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                                         // These are example gains you may need to them for your own robot!
-                                        .pid(0.04, 0, 0)
+                                        // .pid(0.1, 0, 0.05)
+                                        .pid(0, 0, 0)
                                         .apply(drivingFFConfig)
                                         .outputRange(-1, 1);
 
@@ -54,7 +49,7 @@ public final class Configs {
                         turningConfig.closedLoop
                                         .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
                                         // These are example gains you may need to them for your own robot!
-                                        .pid(1, 0, 0)
+                                        .pid(2, 0, 0.2)
                                         .outputRange(-1, 1)
                                         // Enable PID wrap around for the turning motor. This will allow the PID
                                         // controller to go through 0 to get to the setpoint i.e. going from 350 degrees

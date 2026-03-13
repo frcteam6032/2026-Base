@@ -13,6 +13,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Limelight {
     private final NetworkTable m_limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
+    private final double[] m_orientationEntries = new double[6];
+    private double m_lastOrientationDegrees = Double.NaN;
 
     // height of the center of the lens from the floor
     private static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(19);
@@ -29,7 +31,7 @@ public class Limelight {
     public Limelight() {
         // TODO: WPILib doesn't have 2026 field yet. It should be in 2026.1.2
         // cc: https://git.crueter.xyz/mirror/allwpilib/commit/18249badc0
-        m_layout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+        m_layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
     }
 
     private double getDouble(String key) {
@@ -96,9 +98,15 @@ public class Limelight {
     public void setRobotOrientation(Rotation2d angle) {
         // robot_orientation_set is a double array with 6 entries
         // The only one *actually* used is the first one (yaw)
-        double[] entries = new double[6];
-        entries[0] = angle.getDegrees();
-        m_limelightTable.getEntry("robot_orientation_set").setDoubleArray(entries);
+        double headingDegrees = angle.getDegrees();
+        if (!Double.isNaN(m_lastOrientationDegrees)
+                && Math.abs(headingDegrees - m_lastOrientationDegrees) < 0.1) {
+            return;
+        }
+
+        m_orientationEntries[0] = headingDegrees;
+        m_limelightTable.getEntry("robot_orientation_set").setDoubleArray(m_orientationEntries);
+        m_lastOrientationDegrees = headingDegrees;
     }
 
     /**
