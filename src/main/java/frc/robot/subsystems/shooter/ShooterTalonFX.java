@@ -18,9 +18,9 @@ public class ShooterTalonFX implements ShooterMotor {
     private static final int LEADER_ID = 13;
     private static final int FOLLOWER_ID = 14;
 
-    private static final double kP = 0.2;
+    private static final double kP = 0.4;
     private static final double kI = 0.0;
-    private static final double kD = 0.0;
+    private static final double kD = 0.0004;
 
     private static final double TIMEOUT_SECONDS = 0.050;
 

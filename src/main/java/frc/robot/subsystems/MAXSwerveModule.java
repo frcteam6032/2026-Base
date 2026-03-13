@@ -7,6 +7,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
@@ -101,12 +102,15 @@ public class MAXSwerveModule {
         // Optimize the reference state to avoid spinning further than 90 degrees.
         correctedDesiredState.optimize(new Rotation2d(m_turningEncoder.getPosition()));
 
+        SmartDashboard.putNumber("Modules/" + m_drivingSpark.getDeviceId(), correctedDesiredState.speedMetersPerSecond);
+        SmartDashboard.putNumber("Modules/" + m_drivingSpark.getDeviceId() + " (Uncorrected)", desiredState.speedMetersPerSecond);
+
         // Command driving and turning SPARKS towards their respective setpoints.
         // m_drivingClosedLoopController.setReference(correctedDesiredState.speedMetersPerSecond,
         // ControlType.kVelocity);
         // m_turningClosedLoopController.setReference(correctedDesiredState.angle.getRadians(),
         // ControlType.kPosition);
-        m_drivingClosedLoopController.setSetpoint(correctedDesiredState.speedMetersPerSecond, ControlType.kVelocity);
+        m_drivingClosedLoopController.setSetpoint(correctedDesiredState.speedMetersPerSecond * 3.0, ControlType.kVelocity);
         m_turningClosedLoopController.setSetpoint(correctedDesiredState.angle.getRadians(), ControlType.kPosition);
         m_desiredState = desiredState;
     }

@@ -52,7 +52,7 @@ public class RobotContainer {
         private static final double INFEED_SPEED = 0.75;
         private static final double FEEDER_SPEED = 0.9;
         private static final double SPINDEXER_SPEED = 0.9;
-        private static final double SHOOTER_SPIT_SPEED = 3200;
+        private static final double SHOOTER_SPIT_SPEED = 1500; // 1500;
 
         private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d()); // GOOD
         private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 0.75, new Rotation2d()); // FIX
@@ -142,7 +142,7 @@ public class RobotContainer {
                 // ====== //
                 // DRIVER //
                 // ====== //
-                m_driverController.start().onTrue(Commands.run(() -> m_robotDrive.zero()));
+                m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
                 // INFEED //
                 m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(INFEED_SPEED));
@@ -166,6 +166,7 @@ public class RobotContainer {
                 // m_operatorController.a().toggleOnTrue(m_shooter.automaticShuttle());
 
                 m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+                // m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
 
                 // INFEED ARM, MANUAL OVERRIDES //
                 m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
