@@ -11,6 +11,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -18,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.feeder.FeederSubsystem;
@@ -201,13 +201,22 @@ public class RobotContainer {
         }
 
         public Translation2d twistToLocation(Pose2d targetPose) {
-                // Get the angle and distance to the target pose from the active bot pose
-                var robotPose = m_robotDrive.getRobotPoseEstimate();
-                var deltaX = targetPose.getX() - robotPose.getX();
-                var deltaY = targetPose.getY() - robotPose.getY();
-                var distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                var angleToTarget = Math.toDegrees(Math.atan2(deltaY, deltaX));
-                Rotation2d angleDelta = Rotation2d.fromDegrees(angleToTarget - robotPose.getRotation().getDegrees());
+                Pose2d robotPose = m_robotDrive.getRobotPoseEstimate();
+
+                ChassisSpeeds speeds = m_robotDrive.getChassisSpeeds();
+                Pose2d poseForCalculation = robotPose;
+
+                if (speeds != null) {
+                        double lookAheadSeconds = MathUtils.getTwistLookAheadSeconds(speeds);
+                        poseForCalculation = MathUtils.predictPose(robotPose, speeds, lookAheadSeconds);
+                }
+
+                double deltaX = targetPose.getX() - poseForCalculation.getX();
+                double deltaY = targetPose.getY() - poseForCalculation.getY();
+                double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                Rotation2d targetAngle = new Rotation2d(Math.atan2(deltaY, deltaX));
+                Rotation2d angleDelta = targetAngle.minus(poseForCalculation.getRotation());
+
                 return new Translation2d(distance, angleDelta);
         }
 
