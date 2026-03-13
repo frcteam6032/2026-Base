@@ -172,7 +172,7 @@ public class RobotContainer {
                                                 () -> m_robotDrive.joystickDrive(
                                                                 getXSpeed() * GameData.shouldInvertControls(),
                                                                 getYSpeed() * GameData.shouldInvertControls(),
-                                                                getRotationSpeed(),
+                                                                -getRotationSpeed(),
                                                                 true),
                                                 m_robotDrive));
 
