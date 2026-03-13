@@ -2,13 +2,10 @@ package frc.robot;
 
 import java.util.function.DoubleSupplier;
 
-import javax.xml.xpath.XPath;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -34,7 +31,6 @@ import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
 
 public class RobotContainer {
-        private static final double SHOOTER_COAST = 0.1;
         // Create the robot's subsystems
         private final DriveSubsystem m_robotDrive = new DriveSubsystem();
         private final Limelight m_limelight = new Limelight();
@@ -138,7 +134,7 @@ public class RobotContainer {
                                                 m_robotDrive));
 
                 // shooter should always be running due to epic inertia
-                m_shooter.setDefaultCommand(m_shooter.runPercentCommand(() -> SHOOTER_COAST));
+                m_shooter.setDefaultCommand(m_shooter.coastCommand());
                 m_infeed.setDefaultCommand(m_infeed.stopCommand());
                 m_feeder.setDefaultCommand(m_feeder.stopCommand());
                 m_spindexer.setDefaultCommand(m_spindexer.stopCommand());
@@ -172,7 +168,8 @@ public class RobotContainer {
 
                 // m_operatorController.a().toggleOnTrue(m_shooter.automaticShuttle());
 
-                m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+                // m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+                m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
 
                 // INFEED ARM, MANUAL OVERRIDES //
                 m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));

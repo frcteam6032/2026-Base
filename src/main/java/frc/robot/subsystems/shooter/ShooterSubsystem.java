@@ -3,20 +3,13 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
-import java.lang.constant.DirectMethodHandleDesc;
-import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.function.DoubleSupplier;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.vision.Limelight;
-import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.utils.DashboardStore;
 import frc.robot.utils.ShooterTable;
 import frc.robot.utils.ShooterTable.ShooterTableEntry;
@@ -27,10 +20,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public static final double SHOOTER_LOOKAHEAD_SECONDS = 0.1;
 
-    private double m_target = 0.0;
+    private double m_target = 6300.0;
     private boolean m_shooterReady = false;
     private double m_distance = -1.0;
     private double m_xOffset = 0.0;
+
+    private static final double SHOOTER_COAST_VELOCITY = 700;
 
     public ShooterSubsystem(Limelight limelight) {
         // m_shooter = new ShooterSparkMAX();
@@ -45,7 +40,7 @@ public class ShooterSubsystem extends SubsystemBase {
         DashboardStore.add("shooter/Shooter Ready", () -> m_shooterReady);
         DashboardStore.add("shooter/Distance", () -> m_distance);
         DashboardStore.add("shooter/Offset", () -> m_xOffset);
-        SmartDashboard.putNumber("Shooter/Target", 0.0);
+        SmartDashboard.putNumber("Shooter/Target", m_target);
     }
 
     @Override
@@ -55,7 +50,6 @@ public class ShooterSubsystem extends SubsystemBase {
         m_shooterReady = m_limelight.targetValid();
         m_distance = m_limelight.getDistance();
         m_xOffset = m_limelight.getXOffset();
-
     }
 
     public ShooterTableEntry predictedTableEntryShuttle(double dist) {
@@ -69,6 +63,16 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public Command runShooterTableCommand(ShooterTableEntry entry) {
         return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
+    }
+
+    public Command coastCommand() {
+        return run(() -> {
+            if (getVelocityRPM() <= SHOOTER_COAST_VELOCITY + 100) {
+                m_shooter.setVelocityRPM(SHOOTER_COAST_VELOCITY);
+            } else {
+                m_shooter.stop();
+            }
+        });
     }
 
     public Command runRPMCommand(double rpm) {

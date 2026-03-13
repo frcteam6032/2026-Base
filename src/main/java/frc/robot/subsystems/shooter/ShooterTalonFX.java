@@ -3,8 +3,9 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RPM;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.CoastOut;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -18,9 +19,9 @@ public class ShooterTalonFX implements ShooterMotor {
     private static final int LEADER_ID = 13;
     private static final int FOLLOWER_ID = 14;
 
-    private static final double kP = 0.4;
+    private static final double kP = 0.0;
     private static final double kI = 0.0;
-    private static final double kD = 0.0004;
+    private static final double kD = 0.0;
 
     private static final double TIMEOUT_SECONDS = 0.050;
 
@@ -32,8 +33,9 @@ public class ShooterTalonFX implements ShooterMotor {
     private final TalonFX m_followerMotor = new TalonFX(FOLLOWER_ID, kCANBus);
 
     private final TalonFXConfiguration m_motorCfg = new TalonFXConfiguration();
-    private final MotorOutputConfigs m_motorOutputCfg = m_motorCfg.MotorOutput;
 
+    private final DutyCycleOut m_dutyCycleOut = new DutyCycleOut(0.0);
+    private final CoastOut m_coastOut = new CoastOut();
     private final VelocityVoltage m_request = new VelocityVoltage(0.0);
     private final Follower m_followerRequest = new Follower(LEADER_ID, MotorAlignmentValue.Opposed);
 
@@ -44,9 +46,10 @@ public class ShooterTalonFX implements ShooterMotor {
         slot0Configs.kP = kP;
         slot0Configs.kI = kI;
         slot0Configs.kD = kD;
-        m_motorOutputCfg.NeutralMode = NeutralModeValue.Coast;
 
-        m_motorCfg.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+        var output = m_motorCfg.MotorOutput;
+        output.NeutralMode = NeutralModeValue.Coast;
+        output.Inverted = InvertedValue.CounterClockwise_Positive;
 
         // apply all configs, 50 ms total timeout
         m_leaderMotor.getConfigurator().apply(m_motorCfg, TIMEOUT_SECONDS);
@@ -55,7 +58,7 @@ public class ShooterTalonFX implements ShooterMotor {
 
     @Override
     public void setPercent(double percent) {
-        m_leaderMotor.set(percent);
+        m_leaderMotor.setControl(m_dutyCycleOut.withOutput(percent));
         m_followerMotor.setControl(m_followerRequest);
     }
 
@@ -73,13 +76,12 @@ public class ShooterTalonFX implements ShooterMotor {
 
     @Override
     public void stop() {
-        setVelocityRPM(0);
+        m_leaderMotor.setControl(m_coastOut);
+        m_followerMotor.setControl(m_followerRequest);
     }
 
     @Override
     public double getSupplyCurrent() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSupplyCurrent'");
+        return m_leaderMotor.getSupplyCurrent().getValueAsDouble();
     }
-
 }
