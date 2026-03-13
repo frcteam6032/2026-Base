@@ -178,6 +178,8 @@ public class DriveSubsystem extends SubsystemBase {
 
         DashboardStore.add("Drive/Heading", () -> getHeading());
 
+        DashboardStore.add("Drive/Raw Heading", () -> m_gyro.getRotation2d().getDegrees());
+
         DashboardStore.addCustom(() -> {
             m_field.setRobotPose(getRobotPoseEstimate());
             SmartDashboard.putData("Field", m_field);
@@ -196,19 +198,19 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearRight.getPosition()
                 });
 
-        if (m_limelight.targetValid()) {
-            Pose2d mt2 = m_limelight.getBotPose();
+        // if (m_limelight.targetValid()) {
+        //     Pose2d mt2 = m_limelight.getBotPose();
 
-            double latency = m_limelight.getLatency();
-            double timestamp = Timer.getFPGATimestamp();
+        //     double latency = m_limelight.getLatency();
+        //     double timestamp = Timer.getFPGATimestamp();
 
-            double correctedTimestamp = timestamp - latency;
+        //     double correctedTimestamp = timestamp - latency;
 
-            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 0.5));
-            m_poseEstimator.addVisionMeasurement(
-                    mt2,
-                    correctedTimestamp);
-        }
+        //     m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 0.5));
+        //     m_poseEstimator.addVisionMeasurement(
+        //             mt2,
+        //             correctedTimestamp);
+        // }
 
         if (m_lockHeading) {
             Rotation2d targetRotation = Rotation2d.fromDegrees(m_lockedHeadingDegrees);
@@ -287,6 +289,10 @@ public class DriveSubsystem extends SubsystemBase {
         double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
         double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
 
+        SmartDashboard.putNumber("Drive/Requested X", xSpeedDelivered);
+        SmartDashboard.putNumber("Drive/Requested Y", ySpeedDelivered);
+        SmartDashboard.putNumber("Drive/Requested Theta", rotDelivered);
+        
         drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
     }
 

@@ -54,7 +54,7 @@ public class RobotContainer {
         private static final double INFEED_SPEED = 0.75;
         private static final double FEEDER_SPEED = 0.9;
         private static final double SPINDEXER_SPEED = 0.9;
-        private static final double SHOOTER_SPIT_SPEED = 3200;
+        private static final double SHOOTER_SPIT_SPEED = 1500; // 1500;
 
         // Update these and make sure to account for red or blue alliance4
         // From orientation of the blue alliance
@@ -185,7 +185,7 @@ public class RobotContainer {
                 // ====== //
                 // DRIVER //
                 // ====== //
-                m_driverController.start().onTrue(Commands.run(() -> m_robotDrive.zero()));
+                m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
                 // INFEED //
                 m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(INFEED_SPEED));
@@ -213,7 +213,8 @@ public class RobotContainer {
 
                 // m_operatorController.a().toggleOnTrue(m_shooter.automaticShuttle());
 
-                m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
+                m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+                // m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
 
                 // INFEED ARM, MANUAL OVERRIDES //
                 m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
