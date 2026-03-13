@@ -198,19 +198,16 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearRight.getPosition()
                 });
 
-        // if (m_limelight.targetValid()) {
-        //     Pose2d mt2 = m_limelight.getBotPose();
-
-        //     double latency = m_limelight.getLatency();
-        //     double timestamp = Timer.getFPGATimestamp();
-
-        //     double correctedTimestamp = timestamp - latency;
-
-        //     m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 0.5));
-        //     m_poseEstimator.addVisionMeasurement(
-        //             mt2,
-        //             correctedTimestamp);
-        // }
+        if (m_limelight.targetValid()) {
+            Pose2d mt2 = m_limelight.getBotPose();
+            double latency = m_limelight.getLatency();
+            double timestamp = Timer.getFPGATimestamp();
+            double correctedTimestamp = timestamp - latency;
+            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 0.5));
+            m_poseEstimator.addVisionMeasurement(
+                    mt2,
+                    correctedTimestamp);
+        }
 
         if (m_lockHeading) {
             Rotation2d targetRotation = Rotation2d.fromDegrees(m_lockedHeadingDegrees);
@@ -292,7 +289,7 @@ public class DriveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("Drive/Requested X", xSpeedDelivered);
         SmartDashboard.putNumber("Drive/Requested Y", ySpeedDelivered);
         SmartDashboard.putNumber("Drive/Requested Theta", rotDelivered);
-        
+
         drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
     }
 
