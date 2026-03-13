@@ -19,9 +19,10 @@ public class ShooterTalonFX implements ShooterMotor {
     private static final int LEADER_ID = 13;
     private static final int FOLLOWER_ID = 14;
 
-    private static final double kP = 0.0;
+    private static final double kP = 0.025;
     private static final double kI = 0.0;
-    private static final double kD = 0.0;
+    private static final double kD = 0.0005;
+    private static final double kS = 0.1;
 
     private static final double TIMEOUT_SECONDS = 0.050;
 
@@ -46,6 +47,7 @@ public class ShooterTalonFX implements ShooterMotor {
         slot0Configs.kP = kP;
         slot0Configs.kI = kI;
         slot0Configs.kD = kD;
+        slot0Configs.kS = kS;
 
         var output = m_motorCfg.MotorOutput;
         output.NeutralMode = NeutralModeValue.Coast;
