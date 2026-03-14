@@ -59,6 +59,8 @@ public class InfeedArmSparkMAX implements InfeedArm {
                 .outputRange(-1, 1);
 
         m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+        m_encoder.setPosition(0.0);
     }
 
     public void setPercent(double percent) {
