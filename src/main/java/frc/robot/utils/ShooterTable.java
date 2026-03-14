@@ -34,7 +34,6 @@ public class ShooterTable {
 
     private static void addEntryShuttle(Distance distance, AngularVelocity speed) {
         shuttleTable.add(new ShooterTableEntry(distance, speed));
-
     }
 
     private static void fillInTable() {
