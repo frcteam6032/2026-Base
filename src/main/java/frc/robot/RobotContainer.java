@@ -183,8 +183,7 @@ public class RobotContainer {
 
         // OUTTAKE //
         m_operatorController.leftBumper().whileTrue(
-                m_infeed.intakeCommand(-INFEED_SPEED)
-                        .alongWith(m_feeder.intakeCommand(-FEEDER_SPEED))
+                m_feeder.intakeCommand(-FEEDER_SPEED)
                         .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED)));
 
     }
