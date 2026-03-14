@@ -156,15 +156,12 @@ public class RobotContainer {
 
         // SHOOTER //
 
-        m_operatorController.x().toggleOnTrue(
-                pointAtHubCommand(this::getXSpeed, this::getYSpeed)
-                        .alongWith(m_shooter.automaticHubShooter(
-                                () -> m_targetDistance)));
+        m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed)
+                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
 
-        // Shuttle test (move to A probably?)
-        m_operatorController.rightBumper()
-                .toggleOnTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
-                        .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
+        // Shuttle (move to A/B probably?)
+        m_operatorController.rightBumper().toggleOnTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
+                .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
 
         // a or b should be autoshuttle
         m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(6000));
@@ -177,15 +174,12 @@ public class RobotContainer {
         m_operatorController.rightTrigger().onTrue(m_infeedArm.bumpCommand(2.5));
 
         // FEED TO SHOOTER //
-        m_operatorController.y()
-                .whileTrue(m_feeder.intakeCommand(FEEDER_SPEED)
-                        .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)));
+        m_operatorController.y().whileTrue(m_feeder.intakeCommand(FEEDER_SPEED)
+                .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)));
 
         // OUTTAKE //
-        m_operatorController.leftBumper().whileTrue(
-                m_feeder.intakeCommand(-FEEDER_SPEED)
-                        .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED)));
-
+        m_operatorController.leftBumper().whileTrue(m_feeder.intakeCommand(-FEEDER_SPEED)
+                .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED)));
     }
 
     // Get the selected auto command
