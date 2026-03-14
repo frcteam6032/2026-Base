@@ -1,6 +1,7 @@
 package frc.robot;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -9,7 +10,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -144,13 +144,12 @@ public class RobotContainer {
         // ====== //
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
-        // INFEED //
+        // INFEED CONTROL //
         m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(INFEED_SPEED));
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
 
-        // TESTING, PLEASE REMOVE //
-        // m_driverController.x().whileTrue(m_shooter.runTargetCommand());
+        // ????8
         m_driverController.y().onTrue(m_robotDrive.readyBump()).onFalse(m_robotDrive.disableOverBump());
 
         // ======== //
@@ -160,9 +159,10 @@ public class RobotContainer {
         // SHOOTER //
 
         m_operatorController.x().whileTrue(
-                pointAtHubCommand(() -> getXSpeed(), () -> getYSpeed())
+                pointAtHubCommand(this::getXSpeed, this::getYSpeed)
                         .alongWith(m_shooter.automaticHubShooter(
                                 m_targetDistance)));
+
         m_operatorController.rightBumper()
                 .whileTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
                         .alongWith(m_shooter.automaticShuttle(m_targetDistance)));
@@ -181,7 +181,6 @@ public class RobotContainer {
                 .whileTrue(m_feeder.intakeCommand(FEEDER_SPEED)
                         .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)));
 
-        m_operatorController.a().whileTrue(m_feeder.intakeCommand(FEEDER_SPEED));
         // OUTTAKE //
         m_operatorController.leftBumper().whileTrue(
                 m_infeed.intakeCommand(-INFEED_SPEED)
@@ -211,7 +210,7 @@ public class RobotContainer {
         return new Pose2d(fieldLength - pose.getX(), pose.getY(), pose.getRotation().times(-1));
     }
 
-    public Translation2d twistToLocation(Pose2d targetPose) {
+    public Pose2d twistToLocation(Pose2d targetPose) {
         if (GameData.getIsRed()) {
             targetPose = convertToRed(targetPose);
         }
@@ -229,46 +228,42 @@ public class RobotContainer {
 
         double deltaX = targetPose.getX() - poseForCalculation.getX();
         double deltaY = targetPose.getY() - poseForCalculation.getY();
-        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
         Rotation2d targetAngle = new Rotation2d(Math.atan2(deltaY, deltaX));
-        Rotation2d angleDelta = targetAngle.minus(poseForCalculation.getRotation());
 
-        return new Translation2d(distance, angleDelta);
+        return new Pose2d(deltaX, deltaY, targetAngle);
     }
 
-    public Pose2d decideShuttleSpot() {
-        Translation2d shuttle1Twist = twistToLocation(SHUTTLE_POSE_1);
-        Translation2d shuttle2Twist = twistToLocation(SHUTTLE_POSE_2);
+    public Pose2d closestShuttleTwist() {
+        Pose2d shuttle1Twist = twistToLocation(SHUTTLE_POSE_1);
+        Pose2d shuttle2Twist = twistToLocation(SHUTTLE_POSE_2);
 
         // Get the distance from the robot pose to each shuttle and pick the closer one
-        if (shuttle1Twist.getX() < shuttle2Twist.getX()) {
-            return SHUTTLE_POSE_1;
+        if (shuttle1Twist.getTranslation().getNorm() < shuttle2Twist.getTranslation().getNorm()) {
+            return shuttle1Twist;
         } else {
-            return SHUTTLE_POSE_2;
+            return shuttle2Twist;
         }
+    }
 
+    private Command suppliedPointCommand(DoubleSupplier x, DoubleSupplier y, Supplier<Pose2d> twistSupplier) {
+        Supplier<Rotation2d> targetSupplier = () -> {
+            var twist = twistSupplier.get();
+
+            m_targetDistance = twist.getTranslation().getNorm();
+            return twist.getRotation();
+        };
+
+        DoubleSupplier xSupplier = () -> x.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond;
+        DoubleSupplier ySupplier = () -> y.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond;
+
+        return m_robotDrive.rotateToAngleCommand(xSupplier, ySupplier, targetSupplier);
     }
 
     public Command pointAtHubCommand(DoubleSupplier x, DoubleSupplier y) {
-        return Commands.run(() -> {
-            Translation2d twist = twistToLocation(HUB_TARGET_POSE);
-            m_targetDistance = twist.getX();
-            m_robotDrive.drive(x.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond,
-                    y.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond,
-                    kRotKp * twist.getAngle().getDegrees() * DriveConstants.kMaxAngularSpeed, true);
-        }, m_robotDrive);
+        return suppliedPointCommand(x, y, () -> twistToLocation(HUB_TARGET_POSE));
     }
 
     public Command pointToBestShuttleCommand(DoubleSupplier x, DoubleSupplier y) {
-        return Commands.run(() -> {
-            Pose2d targetPose = decideShuttleSpot();
-            Translation2d shuttleTwist = twistToLocation(targetPose);
-            m_targetDistance = shuttleTwist.getX();
-            m_robotDrive.drive(x.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond,
-                    y.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond,
-                    kRotKp * shuttleTwist.getAngle().getDegrees() * DriveConstants.kMaxAngularSpeed,
-                    true);
-        }, m_robotDrive);
+        return suppliedPointCommand(x, y, this::closestShuttleTwist);
     }
-
 }

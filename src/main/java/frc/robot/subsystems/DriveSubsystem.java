@@ -6,7 +6,6 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -25,7 +24,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
@@ -453,7 +451,6 @@ public class DriveSubsystem extends SubsystemBase {
      * @return A command that rotates according to the vision system's offset.
      */
     public Command visionRotateCommand(Limelight vision, DoubleSupplier xSpeed, DoubleSupplier ySpeed) {
-
         // If the offset is less than 10, move to the right by some angle
         // If the offset is greater than 10, move to the left by some angle
         // If the angle is between -10 and 10
@@ -464,23 +461,18 @@ public class DriveSubsystem extends SubsystemBase {
     /**
      * Rotates the robot to an angle.
      * 
-     * @param xSpeed The joystick X speed.
-     * @param ySpeed The joystick Y speed.
+     * @param xSpeed The raw X speed.
+     * @param ySpeed The raw Y speed.
      * @param target Provides the target to rotate to.
      * @return A command that rotates the robot to the specified angle.
      */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
-        // @SuppressWarnings("resource")
-        // PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        // controller.enableContinuousInput(-180, 180);
-
         return run(() -> {
             Rotation2d targetRotation = target.get();
             double offset = targetRotation.minus(getRotation2D()).getDegrees();
 
-            joystickDrive(
-                    xSpeed.getAsDouble(), ySpeed.getAsDouble(),
-                    controller.calculate(offset) / DriveConstants.kMaxAngularSpeed,
+            drive(xSpeed.getAsDouble(), ySpeed.getAsDouble(),
+                    controller.calculate(offset),
                     true);
         }).finallyDo(controller::reset);
     }
