@@ -53,14 +53,12 @@ public class RobotContainer {
     private static final double SPINDEXER_SPEED = 0.9;
     private static final double SHOOTER_SPIT_SPEED = 3000;
 
-    private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d()); // GOOD
-    private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 1.0, new Rotation2d()); // GOOD
-    private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, -7.0, new Rotation2d()); // GOOD
-    // private static final double kTransKp = 0.6;
+    // POSE CONSTANTS //
+    private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d());
+    private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 1.0, new Rotation2d());
+    private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, 7.0, new Rotation2d());
 
     private double m_targetDistance = 0.0;
-
-    private static final double kRotKp = 0.015;
 
     // AUTO/DRIVER STUFF //
     private SendableChooser<Command> autoChooser;
@@ -70,7 +68,7 @@ public class RobotContainer {
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
 
     private double getRotationSpeed() {
-        return MathUtil.applyDeadband(
+        return -MathUtil.applyDeadband(
                 MathUtils.scaleDriverController(m_driverController.getRightX(), thetaLimiter,
                         m_driverController.getRightTriggerAxis()),
                 OIConstants.DRIVE_DEADBAND);
@@ -78,19 +76,21 @@ public class RobotContainer {
 
     private double getYSpeed() {
         return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftX(), yLimiter,
-                m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND);
+                m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND)
+                * GameData.shouldInvertControls();
     }
 
     private double getXSpeed() {
         return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
-                m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND);
+                m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND)
+                * GameData.shouldInvertControls();
     }
 
     public Command alignAndShootCommand() {
-        Command cmd = pointAtHubCommand(() -> getXSpeed(), () -> getYSpeed())
+        Command cmd = pointAtHubCommand(() -> 0, () -> 0)
                 .alongWith(m_feeder.intakeCommand(FEEDER_SPEED))
                 .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED))
-                .alongWith(m_shooter.automaticHubShooter(m_targetDistance));
+                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance));
         return cmd;
     }
 
@@ -125,15 +125,13 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // DEFAULT COMMANDS //
         m_robotDrive.setDefaultCommand(
-                new RunCommand(
-                        () -> m_robotDrive.joystickDrive(
-                                getXSpeed() * GameData.shouldInvertControls(),
-                                getYSpeed() * GameData.shouldInvertControls(),
-                                -getRotationSpeed(),
-                                true),
-                        m_robotDrive));
+                m_robotDrive.joystickDriveCommand(
+                        this::getXSpeed,
+                        this::getYSpeed,
+                        this::getRotationSpeed,
+                        () -> true));
 
-        // shooter should always be running due to epic inertia
+        // shooter should always be running due to inertia
         m_shooter.setDefaultCommand(m_shooter.coastCommand());
         m_infeed.setDefaultCommand(m_infeed.stopCommand());
         m_feeder.setDefaultCommand(m_feeder.stopCommand());
@@ -158,15 +156,17 @@ public class RobotContainer {
 
         // SHOOTER //
 
-        m_operatorController.x().whileTrue(
+        m_operatorController.x().toggleOnTrue(
                 pointAtHubCommand(this::getXSpeed, this::getYSpeed)
                         .alongWith(m_shooter.automaticHubShooter(
-                                m_targetDistance)));
+                                () -> m_targetDistance)));
 
+        // Shuttle test (move to A probably?)
         m_operatorController.rightBumper()
-                .whileTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
-                        .alongWith(m_shooter.automaticShuttle(m_targetDistance)));
+                .toggleOnTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
+                        .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
 
+        // a or b should be autoshuttle
         m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(6000));
 
         m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
@@ -207,7 +207,7 @@ public class RobotContainer {
 
     public Pose2d convertToRed(Pose2d pose) {
         double fieldLength = 16.54; // meters
-        return new Pose2d(fieldLength - pose.getX(), pose.getY(), pose.getRotation().times(-1));
+        return new Pose2d(fieldLength - pose.getX(), pose.getY(), new Rotation2d(Math.PI).minus(pose.getRotation()));
     }
 
     public Pose2d twistToLocation(Pose2d targetPose) {
@@ -245,6 +245,9 @@ public class RobotContainer {
         }
     }
 
+    /**
+     * x and y are joystick commands
+     */
     private Command suppliedPointCommand(DoubleSupplier x, DoubleSupplier y, Supplier<Pose2d> twistSupplier) {
         Supplier<Rotation2d> targetSupplier = () -> {
             var twist = twistSupplier.get();

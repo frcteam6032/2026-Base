@@ -198,10 +198,9 @@ public class DriveSubsystem extends SubsystemBase {
 
         if (m_limelight.targetValid()) {
             Pose2d mt2 = m_limelight.getBotPose();
-            double latency = m_limelight.getLatency();
+            double latency = m_limelight.getLatency() / 1000.0;
             double timestamp = Timer.getFPGATimestamp();
             double correctedTimestamp = timestamp - latency;
-            m_poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 0.5));
             m_poseEstimator.addVisionMeasurement(
                     mt2,
                     correctedTimestamp);
@@ -267,6 +266,23 @@ public class DriveSubsystem extends SubsystemBase {
                         : new ChassisSpeeds(xSpeed, ySpeed, rot));
 
         setModuleStates(swerveModuleStates);
+    }
+
+    /**
+     * Method to drive the robot via the joystick.
+     *
+     * @param xSpeed        Speed of the robot in the x direction (forward).
+     * @param ySpeed        Speed of the robot in the y direction (sideways).
+     * @param rot           Angular rate of the robot.
+     * @param fieldRelative Whether the provided x and y speeds are relative to the
+     *                      field.
+     */
+    public Command joystickDriveCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, DoubleSupplier rot,
+            BooleanSupplier fieldRelative) {
+        return run(() -> {
+            joystickDrive(xSpeed.getAsDouble(), ySpeed.getAsDouble(), rot.getAsDouble(),
+                    fieldRelative.getAsBoolean());
+        });
     }
 
     /**

@@ -66,12 +66,12 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public Command coastCommand() {
+        // gradually slow down to ~ the static velocity
         return run(() -> {
-            if (getVelocityRPM() <= SHOOTER_COAST_VELOCITY + 100) {
+            if (getVelocityRPM() <= SHOOTER_COAST_VELOCITY + 100)
                 m_shooter.setVelocityRPM(SHOOTER_COAST_VELOCITY);
-            } else {
+            else
                 m_shooter.stop();
-            }
         });
     }
 
@@ -95,14 +95,18 @@ public class ShooterSubsystem extends SubsystemBase {
         return runOnce(() -> m_shooter.stop());
     }
 
-    public Command automaticShuttle(double dist) {
-        ShooterTableEntry entry = predictedTableEntryShuttle(dist);
-        return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
+    public Command automaticShuttle(DoubleSupplier dist) {
+        return run(() -> {
+            ShooterTableEntry entry = predictedTableEntryShuttle(dist.getAsDouble());
+            m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM));
+        });
     }
 
-    public Command automaticHubShooter(double dist) {
-        ShooterTableEntry entry = predictedTableEntryHub(dist);
-        return run(() -> m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM)));
+    public Command automaticHubShooter(DoubleSupplier dist) {
+        return run(() -> {
+            ShooterTableEntry entry = predictedTableEntryHub(dist.getAsDouble());
+            m_shooter.setVelocityRPM(entry.wheelSpeed.in(RPM));
+        });
     }
 
     public double getVelocityRPM() {

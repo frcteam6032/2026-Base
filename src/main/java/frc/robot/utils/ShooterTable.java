@@ -48,13 +48,13 @@ public class ShooterTable {
         addEntryShooter(Feet.of(10), RPM.of(3610));
 
         // Shuttle Table
-        addEntryShuttle(Feet.of(4), RPM.of(2950));
-        addEntryShuttle(Feet.of(5), RPM.of(3000));
-        addEntryShuttle(Feet.of(6), RPM.of(3110));
-        addEntryShuttle(Feet.of(7), RPM.of(3250));
-        addEntryShuttle(Feet.of(8), RPM.of(3360));
-        addEntryShuttle(Feet.of(9), RPM.of(3450));
-        addEntryShuttle(Feet.of(10), RPM.of(3610));
+        addEntryShuttle(Feet.of(4), RPM.of(1950));
+        addEntryShuttle(Feet.of(5), RPM.of(2000));
+        addEntryShuttle(Feet.of(6), RPM.of(2110));
+        addEntryShuttle(Feet.of(7), RPM.of(2250));
+        addEntryShuttle(Feet.of(8), RPM.of(2360));
+        addEntryShuttle(Feet.of(9), RPM.of(2450));
+        addEntryShuttle(Feet.of(10), RPM.of(2610));
     }
 
     static {
