@@ -7,6 +7,8 @@ import frc.robot.utils.DashboardStore;
 public class InfeedSubsystem extends SubsystemBase {
     private final InfeedMotor m_infeed;
 
+    // Target velocity 4700 
+
     public InfeedSubsystem() {
         // m_infeed = new InfeedSparkMAX();
         // m_infeed = new InfeedTalonFX();

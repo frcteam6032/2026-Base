@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.Matrix;
@@ -53,6 +54,12 @@ public class DriveSubsystem extends SubsystemBase {
     public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
             DriveSubsystem.ROTATE_kD);
 
+    private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
+
+    private boolean m_vacuumDriveEnabled = false;
+    private Rotation2d m_vacuumHeadingTarget = new Rotation2d();
+    private final PIDController m_vacuumHeadingController = new PIDController(5.0, 0.0, 0.2);
+
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
             DriveConstants.kFrontLeftDrivingCanId,
@@ -98,6 +105,7 @@ public class DriveSubsystem extends SubsystemBase {
         m_gyro.setYaw(0);
 
         controller.enableContinuousInput(-180, 180);
+        m_vacuumHeadingController.enableContinuousInput(-Math.PI, Math.PI);
 
         // Initialize the pose estimator
         m_poseEstimator = new SwerveDrivePoseEstimator(
@@ -177,10 +185,12 @@ public class DriveSubsystem extends SubsystemBase {
         DashboardStore.add("Drive/Heading", () -> getHeading());
 
         DashboardStore.add("Drive/Raw Heading", () -> m_gyro.getRotation2d().getDegrees());
+        DashboardStore.add("Drive/Vacuum Mode", () -> m_vacuumDriveEnabled ? 1.0 : 0.0);
 
         DashboardStore.addCustom(() -> {
             m_field.setRobotPose(getRobotPoseEstimate());
             SmartDashboard.putData("Field", m_field);
+            SmartDashboard.putBoolean("Drive/Vacuum Mode", m_vacuumDriveEnabled);
         });
     }
 
@@ -295,16 +305,36 @@ public class DriveSubsystem extends SubsystemBase {
      *                      field.
      */
     public void joystickDrive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+        double rotCommand = rot;
+        if (m_vacuumDriveEnabled) {
+            rotCommand = applyVacuumRotation(xSpeed, ySpeed, rot);
+        }
+
         // Convert the commanded speeds into the correct units for the drivetrain
         double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
         double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
-        double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
+        double rotDelivered = rotCommand * DriveConstants.kMaxAngularSpeed;
 
         SmartDashboard.putNumber("Drive/Requested X", xSpeedDelivered);
         SmartDashboard.putNumber("Drive/Requested Y", ySpeedDelivered);
         SmartDashboard.putNumber("Drive/Requested Theta", rotDelivered);
 
         drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
+    }
+
+    private double applyVacuumRotation(double xSpeed, double ySpeed, double manualRot) {
+        double magnitude = Math.hypot(xSpeed, ySpeed);
+        if (magnitude <= VACUUM_TRANSLATION_DEADBAND) {
+            return manualRot;
+        }
+
+        // Set the heading equal to the direction of the translation vector
+        m_vacuumHeadingTarget = new Rotation2d(Math.atan2(ySpeed, xSpeed));
+        double pidOutput = m_vacuumHeadingController.calculate(
+                getRobotPoseEstimate().getRotation().getRadians(),
+                m_vacuumHeadingTarget.getRadians());
+
+        return MathUtil.clamp(pidOutput / DriveConstants.kMaxAngularSpeed, -1.0, 1.0);
     }
 
     /**
@@ -331,6 +361,28 @@ public class DriveSubsystem extends SubsystemBase {
     public void disableHeadingLock() {
         m_lockHeading = false;
         controller.reset();
+    }
+
+    public void setVacuumDriveEnabled(boolean enabled) {
+        if (m_vacuumDriveEnabled == enabled) {
+            return;
+        }
+
+        m_vacuumDriveEnabled = enabled;
+        m_vacuumHeadingController.reset();
+        SmartDashboard.putBoolean("Drive/Vacuum Mode", m_vacuumDriveEnabled);
+    }
+
+    public void toggleVacuumDrive() {
+        setVacuumDriveEnabled(!m_vacuumDriveEnabled);
+    }
+
+    public boolean isVacuumDriveEnabled() {
+        return m_vacuumDriveEnabled;
+    }
+
+    public Command toggleVacuumDriveCommand() {
+        return runOnce(() -> toggleVacuumDrive());
     }
 
     public void overBump() {

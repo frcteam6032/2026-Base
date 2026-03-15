@@ -112,4 +112,5 @@ public class ShooterSubsystem extends SubsystemBase {
     public double getVelocityRPM() {
         return m_shooter.getVelocityRPM();
     }
+
 }
