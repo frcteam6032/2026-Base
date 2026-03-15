@@ -40,4 +40,10 @@ public class InfeedSparkMAX implements InfeedMotor {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSupplyCurrent'");
     }
+
+    @Override
+    public void setVelocityRPM(double rpm) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setVelocityRPM'");
+    }
 }

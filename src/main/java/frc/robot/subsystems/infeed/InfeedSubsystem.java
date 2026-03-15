@@ -30,6 +30,10 @@ public class InfeedSubsystem extends SubsystemBase {
         return m_infeed.getVelocityRPM();
     }
 
+    public Command intakeRPMCommand(double rpm) {
+        return run(() -> m_infeed.setVelocityRPM(rpm));
+    }
+
     public Command intakeCommand(double percent) {
         return run(() -> runPercent(percent));
     }

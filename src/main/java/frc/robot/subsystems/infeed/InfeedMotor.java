@@ -6,5 +6,7 @@ public interface InfeedMotor {
     double getVelocityRPM();
     double getSupplyCurrent();
 
+    void setVelocityRPM(double rpm);
+
     void stop();
 }

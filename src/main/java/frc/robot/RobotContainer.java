@@ -48,7 +48,7 @@ public class RobotContainer {
             OIConstants.OPERATOR_CONTROLLER);
 
     // COMMAND CONSTANTS //
-    private static final double INFEED_SPEED = 0.75;
+    private static final double INFEED_SPEED = 4700.0; //0.75;
     private static final double FEEDER_SPEED = 0.9;
     private static final double SPINDEXER_SPEED = 0.9;
     private static final double SHOOTER_SPIT_SPEED = 3000;
@@ -96,7 +96,7 @@ public class RobotContainer {
 
     public Command autoIntakeCommand() {
         Command deployAndIntake = m_infeedArm.switchPositionCommand()
-                .andThen(m_infeed.intakeCommand(INFEED_SPEED));
+                .andThen(m_infeed.intakeRPMCommand(INFEED_SPEED));
         return deployAndIntake;
     }
 
@@ -143,7 +143,7 @@ public class RobotContainer {
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
         // INFEED CONTROL //
-        m_driverController.leftTrigger().whileTrue(m_infeed.intakeCommand(INFEED_SPEED));
+        m_driverController.leftTrigger().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
         m_driverController.a().onTrue(m_robotDrive.toggleVacuumDriveCommand());
