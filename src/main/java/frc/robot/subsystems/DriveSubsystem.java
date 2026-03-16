@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.Matrix;
@@ -30,13 +29,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Angle;
-
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.ModuleConfig;
@@ -45,20 +41,11 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 public class DriveSubsystem extends SubsystemBase {
-    public static final double ROTATE_kP = 0.22;
+    public static final double ROTATE_kP = 0.055;
     public static final double ROTATE_kD = 0.006;
 
-    private boolean m_lockHeading = false;
-    private double m_lockedHeadingDegrees = 0.0;
-    // private static final double ALIGNMENT_DEADBAND = 1.5;
     public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
             DriveSubsystem.ROTATE_kD);
-
-    private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
-
-    private boolean m_vacuumDriveEnabled = false;
-    private Rotation2d m_vacuumHeadingTarget = new Rotation2d();
-    private final PIDController m_vacuumHeadingController = new PIDController(5.0, 0.0, 0.2);
 
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -105,7 +92,6 @@ public class DriveSubsystem extends SubsystemBase {
         m_gyro.setYaw(0);
 
         controller.enableContinuousInput(-180, 180);
-        m_vacuumHeadingController.enableContinuousInput(-Math.PI, Math.PI);
 
         // Initialize the pose estimator
         m_poseEstimator = new SwerveDrivePoseEstimator(
@@ -185,12 +171,9 @@ public class DriveSubsystem extends SubsystemBase {
         DashboardStore.add("Drive/Heading", () -> getHeading());
 
         DashboardStore.add("Drive/Raw Heading", () -> m_gyro.getRotation2d().getDegrees());
-        DashboardStore.add("Drive/Vacuum Mode", () -> m_vacuumDriveEnabled ? 1.0 : 0.0);
-
         DashboardStore.addCustom(() -> {
             m_field.setRobotPose(getRobotPoseEstimate());
             SmartDashboard.putData("Field", m_field);
-            SmartDashboard.putBoolean("Drive/Vacuum Mode", m_vacuumDriveEnabled);
         });
     }
 
@@ -214,14 +197,6 @@ public class DriveSubsystem extends SubsystemBase {
             m_poseEstimator.addVisionMeasurement(
                     mt2,
                     correctedTimestamp);
-        }
-
-        if (m_lockHeading) {
-            Rotation2d targetRotation = Rotation2d.fromDegrees(m_lockedHeadingDegrees);
-            double offset = targetRotation.minus(getRotation2D()).getDegrees();
-            double rotCommand = controller.calculate(offset) / DriveConstants.kMaxAngularSpeed;
-            // Drive with zero translation and apply rotation correction (field relative)
-            joystickDrive(0.0, 0.0, rotCommand, true);
         }
 
     }
@@ -305,36 +280,16 @@ public class DriveSubsystem extends SubsystemBase {
      *                      field.
      */
     public void joystickDrive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-        double rotCommand = rot;
-        if (m_vacuumDriveEnabled) {
-            rotCommand = applyVacuumRotation(xSpeed, ySpeed, rot);
-        }
-
         // Convert the commanded speeds into the correct units for the drivetrain
         double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
         double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
-        double rotDelivered = rotCommand * DriveConstants.kMaxAngularSpeed;
+        double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
 
         SmartDashboard.putNumber("Drive/Requested X", xSpeedDelivered);
         SmartDashboard.putNumber("Drive/Requested Y", ySpeedDelivered);
         SmartDashboard.putNumber("Drive/Requested Theta", rotDelivered);
 
         drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
-    }
-
-    private double applyVacuumRotation(double xSpeed, double ySpeed, double manualRot) {
-        double magnitude = Math.hypot(xSpeed, ySpeed);
-        if (magnitude <= VACUUM_TRANSLATION_DEADBAND) {
-            return manualRot;
-        }
-
-        // Set the heading equal to the direction of the translation vector
-        m_vacuumHeadingTarget = new Rotation2d(Math.atan2(ySpeed, xSpeed));
-        double pidOutput = m_vacuumHeadingController.calculate(
-                getRobotPoseEstimate().getRotation().getRadians(),
-                m_vacuumHeadingTarget.getRadians());
-
-        return MathUtil.clamp(pidOutput / DriveConstants.kMaxAngularSpeed, -1.0, 1.0);
     }
 
     /**
@@ -356,57 +311,6 @@ public class DriveSubsystem extends SubsystemBase {
         m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         m_rearLeft.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         m_rearRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-    }
-
-    public void disableHeadingLock() {
-        m_lockHeading = false;
-        controller.reset();
-    }
-
-    public void setVacuumDriveEnabled(boolean enabled) {
-        if (m_vacuumDriveEnabled == enabled) {
-            return;
-        }
-
-        m_vacuumDriveEnabled = enabled;
-        m_vacuumHeadingController.reset();
-        SmartDashboard.putBoolean("Drive/Vacuum Mode", m_vacuumDriveEnabled);
-    }
-
-    public void toggleVacuumDrive() {
-        setVacuumDriveEnabled(!m_vacuumDriveEnabled);
-    }
-
-    public boolean isVacuumDriveEnabled() {
-        return m_vacuumDriveEnabled;
-    }
-
-    public Command toggleVacuumDriveCommand() {
-        return runOnce(() -> toggleVacuumDrive());
-    }
-
-    public void overBump() {
-        StatusSignal<Angle> headingSignal = m_gyro.getYaw();
-        double yaw = headingSignal.getValueAsDouble();
-
-        yaw = ((yaw % 360.0) + 360.0) % 360.0;
-
-        double deltaTo0 = Math.min(yaw, 360.0 - yaw);
-        double deltaTo180 = Math.min(Math.abs(yaw - 180.0), 360.0 - Math.abs(yaw - 180.0));
-
-        m_lockedHeadingDegrees = (deltaTo0 <= deltaTo180) ? 0.0 : 180.0;
-
-        m_lockHeading = true;
-        controller.reset();
-
-    }
-
-    public Command readyBump() {
-        return run(() -> overBump());
-    }
-
-    public Command disableOverBump() {
-        return runOnce(() -> disableHeadingLock());
     }
 
     public Command setXCommand() {

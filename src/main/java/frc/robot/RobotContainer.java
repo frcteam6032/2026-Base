@@ -48,10 +48,11 @@ public class RobotContainer {
             OIConstants.OPERATOR_CONTROLLER);
 
     // COMMAND CONSTANTS //
-    private static final double INFEED_SPEED = 4700.0; //0.75;
+    private static final double INFEED_SPEED = 4700.0; // 0.75;
     private static final double FEEDER_SPEED = 0.9;
     private static final double SPINDEXER_SPEED = 0.9;
     private static final double SHOOTER_SPIT_SPEED = 3000;
+    private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
 
     // POSE CONSTANTS //
     private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d());
@@ -66,6 +67,16 @@ public class RobotContainer {
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(8.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(8.);
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
+
+    private enum DriveMode {
+        NORMAL,
+        VACUUM,
+        OVER_BUMP
+    }
+
+    private DriveMode m_driveMode = DriveMode.NORMAL;
+    private Rotation2d m_vacuumHeadingTarget = new Rotation2d();
+    private Rotation2d m_overBumpHeadingTarget = new Rotation2d();
 
     private double getRotationSpeed() {
         return -MathUtil.applyDeadband(
@@ -84,6 +95,86 @@ public class RobotContainer {
         return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
                 m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND)
                 * GameData.shouldInvertControls();
+    }
+
+    private void configureDriveModeCommand() {
+        m_robotDrive.setDefaultCommand(createDriveCommand());
+    }
+
+    private void setDriveMode(DriveMode newMode) {
+        if (m_driveMode == newMode) {
+            return;
+        }
+
+        m_driveMode = newMode;
+        configureDriveModeCommand();
+    }
+
+    private void toggleVacuumMode() {
+        if (m_driveMode == DriveMode.VACUUM) {
+            setDriveMode(DriveMode.NORMAL);
+        } else {
+            setDriveMode(DriveMode.VACUUM);
+        }
+    }
+
+    private Command createDriveCommand() {
+        switch (m_driveMode) {
+            case VACUUM:
+                return createVacuumDriveCommand();
+            case OVER_BUMP:
+                return createOverBumpDriveCommand();
+            case NORMAL:
+            default:
+                return createNormalDriveCommand();
+        }
+    }
+
+    private Command createNormalDriveCommand() {
+        return m_robotDrive.joystickDriveCommand(
+                () -> getXSpeed(),
+                () -> getYSpeed(),
+                () -> getRotationSpeed(),
+                () -> true);
+    }
+
+    private Command createVacuumDriveCommand() {
+        return m_robotDrive.rotateToAngleCommand(
+                () -> getXSpeed(),
+                () -> getYSpeed(),
+                () -> getVacuumHeadingTarget())
+                .beforeStarting(() -> m_vacuumHeadingTarget = m_robotDrive.getRobotPoseEstimate().getRotation());
+    }
+
+    private Command createOverBumpDriveCommand() {
+        return m_robotDrive.rotateToAngleCommand(
+                () -> getXSpeed(),
+                () -> getYSpeed(),
+                () -> m_overBumpHeadingTarget)
+                .beforeStarting(() -> updateOverBumpTarget());
+    }
+
+    private Rotation2d getVacuumHeadingTarget() {
+        double x = getXSpeed();
+        double y = getYSpeed();
+        double magnitude = Math.hypot(x, y);
+
+        if (magnitude > VACUUM_TRANSLATION_DEADBAND) {
+            m_vacuumHeadingTarget = new Rotation2d(Math.atan2(y, x));
+        }
+
+        return m_vacuumHeadingTarget;
+    }
+
+    private void updateOverBumpTarget() {
+        double yaw = m_robotDrive.getHeading();
+        yaw = ((yaw % 360.0) + 360.0) % 360.0;
+
+        double deltaTo0 = Math.min(yaw, 360.0 - yaw);
+        double deltaTo180 = Math.min(Math.abs(yaw - 180.0), 360.0 - Math.abs(yaw - 180.0));
+
+        double lockedHeading = (deltaTo0 <= deltaTo180) ? 0.0 : 180.0;
+        m_overBumpHeadingTarget = Rotation2d.fromDegrees(lockedHeading);
     }
 
     public Command alignAndShootCommand() {
@@ -109,6 +200,9 @@ public class RobotContainer {
 
         // Config buttons
         initAutoChooser();
+
+        // Set the initial drive mode/default command
+        configureDriveModeCommand();
     }
 
     // TODO
@@ -123,13 +217,7 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        // DEFAULT COMMANDS //
-        m_robotDrive.setDefaultCommand(
-                m_robotDrive.joystickDriveCommand(
-                        this::getXSpeed,
-                        this::getYSpeed,
-                        this::getRotationSpeed,
-                        () -> true));
+        // DEFAULT COMMANDS handled via drive mode management
 
         // shooter should always be running due to inertia
         m_shooter.setDefaultCommand(m_shooter.coastCommand());
@@ -146,10 +234,10 @@ public class RobotContainer {
         m_driverController.leftTrigger().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
-        m_driverController.a().onTrue(m_robotDrive.toggleVacuumDriveCommand());
 
-        // ????8
-        m_driverController.y().onTrue(m_robotDrive.readyBump()).onFalse(m_robotDrive.disableOverBump());
+        m_driverController.a().onTrue(Commands.runOnce(this::toggleVacuumMode));
+        m_driverController.y().onTrue(Commands.runOnce(() -> setDriveMode(DriveMode.OVER_BUMP)))
+                .onFalse(Commands.runOnce(() -> setDriveMode(DriveMode.NORMAL)));
 
         // ======== //
         // OPERATOR //
