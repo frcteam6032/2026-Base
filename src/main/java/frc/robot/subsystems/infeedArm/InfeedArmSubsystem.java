@@ -59,6 +59,23 @@ public class InfeedArmSubsystem extends SubsystemBase {
         return runOnce(() -> setCurrentPosition(Location.Stow));
     }
 
+    private void oscillateArm() {
+        // If current position is deploy, go up and back down a few times
+        if (m_currentPosition == Location.Deploy) {
+            m_infeed.runToPosition(m_currentPosition.Position + 5);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            m_infeed.runToPosition(m_currentPosition.Position);
+        }
+    }
+
+    public Command oscillateArmCommand() {
+        return runOnce(this::oscillateArm);
+    }
+
     private void switchPosition() {
         switch (m_currentPosition) {
             case Deploy:
