@@ -56,7 +56,7 @@ public class RobotContainer {
     private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
 
     // POSE CONSTANTS //
-    private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.01, 2.64, new Rotation2d());
+    private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.57, 4.04, new Rotation2d());
     private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 1.0, new Rotation2d());
     private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, 7.0, new Rotation2d());
 
@@ -130,8 +130,7 @@ public class RobotContainer {
         double magnitude = Math.hypot(x, y);
 
         if (magnitude > VACUUM_TRANSLATION_DEADBAND) {
-            m_vacuumHeadingTarget = new Rotation2d(x, y).plus(new Rotation2d(Math.PI));
-            // m_vacuumHeadingTarget = new Rotation2d(-Math.PI);
+            m_vacuumHeadingTarget = new Rotation2d(x, y);// .plus(new Rotation2d(Math.PI));
         }
 
         return m_vacuumHeadingTarget;
@@ -215,8 +214,8 @@ public class RobotContainer {
 
         // SHOOTER //
 
-        m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed));
-        // .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
+        m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed)
+                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
 
         // Shuttle (move to A/B probably?)
         m_operatorController.rightBumper()
@@ -284,7 +283,9 @@ public class RobotContainer {
         double deltaY = targetPose.getY() - poseForCalculation.getY();
         Rotation2d targetAngle = new Rotation2d(Math.atan2(deltaY, deltaX));
 
-        return new Pose2d(deltaX, deltaY, targetAngle);
+        // add 180 deg, because we always want the shooter pointing towards the twist
+        // point.
+        return new Pose2d(deltaX, deltaY, targetAngle.plus(new Rotation2d(Math.PI)));
     }
 
     public Pose2d closestShuttleTwist() {
@@ -307,11 +308,14 @@ public class RobotContainer {
             var twist = twistSupplier.get();
 
             m_targetDistance = twist.getTranslation().getNorm();
-            return twist.getRotation();
+
+            SmartDashboard.putNumber("Target Angle", twist.getRotation().getDegrees());
+            SmartDashboard.putNumber("Target Distance", m_targetDistance);
+            return twist.getRotation();// .plus(new Rotation2d(Math.PI));
         };
 
-        DoubleSupplier xSupplier = () -> x.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond;
-        DoubleSupplier ySupplier = () -> y.getAsDouble() * DriveConstants.kMaxSpeedMetersPerSecond;
+        DoubleSupplier xSupplier = () -> x.getAsDouble();
+        DoubleSupplier ySupplier = () -> y.getAsDouble();
 
         return m_robotDrive.rotateToAngleCommand(xSupplier, ySupplier, targetSupplier);
     }

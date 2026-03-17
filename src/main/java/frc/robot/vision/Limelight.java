@@ -77,7 +77,8 @@ public class Limelight {
     public Pose2d getBotPose() {
         // TODO: red/blue stuff
         var botPose = m_limelightTable.getEntry("botpose_orb_wpiblue").getDoubleArray(new double[6]);
-        return new Pose2d(botPose[0], botPose[1], Rotation2d.fromDegrees(botPose[5]));
+        var botPoseMT1 = m_limelightTable.getEntry("botpose_wpiblue").getDoubleArray(new double[6]);
+        return new Pose2d(botPose[0], botPose[1], Rotation2d.fromDegrees(botPoseMT1[5]));
     }
 
     // Latency (ms)

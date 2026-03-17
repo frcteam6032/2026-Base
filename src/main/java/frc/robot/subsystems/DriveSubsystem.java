@@ -438,7 +438,8 @@ public class DriveSubsystem extends SubsystemBase {
         return run(() -> {
             SmartDashboard.putNumber("Drive/vacHeading", target.get().getDegrees());
             Rotation2d targetRotation = target.get();
-            double offset = getRotation2D().minus(targetRotation).getDegrees();
+            double offset = (targetRotation.minus(getRotation2D())).getDegrees();
+            // double offset = getRotation2D().minus(targetRotation).getDegrees();
 
             var output = controller.calculate(offset);
             SmartDashboard.putNumber("Drive/output", output);
