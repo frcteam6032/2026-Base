@@ -41,8 +41,8 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 public class DriveSubsystem extends SubsystemBase {
-    public static final double ROTATE_kP = 0.055;
-    public static final double ROTATE_kD = 0.006;
+    public static final double ROTATE_kP = 1.0 / 90.0;
+    public static final double ROTATE_kD = 0.000;
 
     public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
             DriveSubsystem.ROTATE_kD);
@@ -79,7 +79,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Standard deviations of model states and vision measurements (default)
     private static final Matrix<N3, N1> stateStdDevs = VecBuilder.fill(0.05, 0.05, 0.01);
-    private static final Matrix<N3, N1> visionMeasurementStdDevs = VecBuilder.fill(0.5, 0.5, 0.5);
+    private static final Matrix<N3, N1> visionMeasurementStdDevs = VecBuilder.fill(2.5, 2.5, 2.5);
 
     // Telemetry
     private final Field2d m_field = new Field2d();
@@ -366,10 +366,6 @@ public class DriveSubsystem extends SubsystemBase {
             return;
         }
 
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(0.1, 0.0, 0.005);
-        // controller.enableContinuousInput(-180, 180);
-
         if (Math.abs(error.getAsDouble()) > 1.5) {
             joystickDrive(0, -controller.calculate(error.getAsDouble()) / DriveConstants.kMaxSpeedMetersPerSecond, 0,
                     false);
@@ -433,18 +429,23 @@ public class DriveSubsystem extends SubsystemBase {
     /**
      * Rotates the robot to an angle.
      * 
-     * @param xSpeed The raw X speed.
-     * @param ySpeed The raw Y speed.
+     * @param xSpeed The joystick X speed.
+     * @param ySpeed The joystick Y speed.
      * @param target Provides the target to rotate to.
      * @return A command that rotates the robot to the specified angle.
      */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
         return run(() -> {
+            SmartDashboard.putNumber("Drive/vacHeading", target.get().getDegrees());
             Rotation2d targetRotation = target.get();
-            double offset = targetRotation.minus(getRotation2D()).getDegrees();
+            double offset = getRotation2D().minus(targetRotation).getDegrees();
 
-            drive(xSpeed.getAsDouble(), ySpeed.getAsDouble(),
-                    controller.calculate(offset),
+            var output = controller.calculate(offset);
+            SmartDashboard.putNumber("Drive/output", output);
+            SmartDashboard.putNumber("Drive/offset", offset);
+
+            joystickDrive(xSpeed.getAsDouble(), ySpeed.getAsDouble(),
+                    output,
                     true);
         }).finallyDo(controller::reset);
     }

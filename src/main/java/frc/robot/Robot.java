@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
 
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -54,9 +55,21 @@ public class Robot extends TimedRobot {
         }, 0.1);
 
         // QDash stuff
-        QFRCLib.startWebServer();
+        // QFRCLib.startWebServer();
         QFRCLib.publishMatchTime(this);
         QFRCLib.setErrorHistoryLength(10);
+
+        // limelight ports
+        PortForwarder.add(5800, "172.29.0.1", 5800);
+        PortForwarder.add(5801, "172.29.0.1", 5801);
+        PortForwarder.add(5802, "172.29.0.1", 5802);
+        PortForwarder.add(5803, "172.29.0.1", 5803);
+        PortForwarder.add(5804, "172.29.0.1", 5804);
+        PortForwarder.add(5805, "172.29.0.1", 5805);
+        PortForwarder.add(5806, "172.29.0.1", 5806);
+        PortForwarder.add(5807, "172.29.0.1", 5807);
+        PortForwarder.add(5808, "172.29.0.1", 5808);
+        PortForwarder.add(5809, "172.29.0.1", 5809);
 
         // Feed alliance data to GameData every second
         // be careful with this as it is somewhat expensive

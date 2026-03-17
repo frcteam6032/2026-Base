@@ -26,6 +26,7 @@ import frc.robot.subsystems.infeed.InfeedSubsystem;
 import frc.robot.subsystems.infeedArm.InfeedArmSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.spindexer.SpindexerSubsystem;
+import frc.robot.utils.DashboardStore;
 import frc.robot.utils.GameData;
 import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
@@ -68,13 +69,6 @@ public class RobotContainer {
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(8.);
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
 
-    private enum DriveMode {
-        NORMAL,
-        VACUUM,
-        OVER_BUMP
-    }
-
-    private DriveMode m_driveMode = DriveMode.NORMAL;
     private Rotation2d m_vacuumHeadingTarget = new Rotation2d();
     private Rotation2d m_overBumpHeadingTarget = new Rotation2d();
 
@@ -97,37 +91,13 @@ public class RobotContainer {
                 * GameData.shouldInvertControls();
     }
 
+    private Rotation2d getVacHeading() {
+        return m_vacuumHeadingTarget;
+    }
+
     private void configureDriveModeCommand() {
-        m_robotDrive.setDefaultCommand(createDriveCommand());
-    }
-
-    private void setDriveMode(DriveMode newMode) {
-        if (m_driveMode == newMode) {
-            return;
-        }
-
-        m_driveMode = newMode;
-        configureDriveModeCommand();
-    }
-
-    private void toggleVacuumMode() {
-        if (m_driveMode == DriveMode.VACUUM) {
-            setDriveMode(DriveMode.NORMAL);
-        } else {
-            setDriveMode(DriveMode.VACUUM);
-        }
-    }
-
-    private Command createDriveCommand() {
-        switch (m_driveMode) {
-            case VACUUM:
-                return createVacuumDriveCommand();
-            case OVER_BUMP:
-                return createOverBumpDriveCommand();
-            case NORMAL:
-            default:
-                return createNormalDriveCommand();
-        }
+        m_robotDrive.removeDefaultCommand();
+        m_robotDrive.setDefaultCommand(createNormalDriveCommand());
     }
 
     private Command createNormalDriveCommand() {
@@ -160,7 +130,8 @@ public class RobotContainer {
         double magnitude = Math.hypot(x, y);
 
         if (magnitude > VACUUM_TRANSLATION_DEADBAND) {
-            m_vacuumHeadingTarget = new Rotation2d(Math.atan2(y, x));
+            m_vacuumHeadingTarget = new Rotation2d(x, y).plus(new Rotation2d(Math.PI));
+            // m_vacuumHeadingTarget = new Rotation2d(-Math.PI);
         }
 
         return m_vacuumHeadingTarget;
@@ -235,9 +206,8 @@ public class RobotContainer {
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
 
-        m_driverController.a().onTrue(Commands.runOnce(this::toggleVacuumMode));
-        m_driverController.y().onTrue(Commands.runOnce(() -> setDriveMode(DriveMode.OVER_BUMP)))
-                .onFalse(Commands.runOnce(() -> setDriveMode(DriveMode.NORMAL)));
+        m_driverController.a().toggleOnTrue(createVacuumDriveCommand());
+        m_driverController.y().toggleOnTrue(createOverBumpDriveCommand());
 
         // ======== //
         // OPERATOR //
@@ -245,8 +215,8 @@ public class RobotContainer {
 
         // SHOOTER //
 
-        m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed)
-                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
+        m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed));
+                //.alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
 
         // Shuttle (move to A/B probably?)
         m_operatorController.rightBumper()
