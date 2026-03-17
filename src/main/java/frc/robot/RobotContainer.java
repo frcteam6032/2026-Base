@@ -16,9 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.feeder.FeederSubsystem;
@@ -26,7 +24,6 @@ import frc.robot.subsystems.infeed.InfeedSubsystem;
 import frc.robot.subsystems.infeedArm.InfeedArmSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.spindexer.SpindexerSubsystem;
-import frc.robot.utils.DashboardStore;
 import frc.robot.utils.GameData;
 import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
@@ -89,15 +86,6 @@ public class RobotContainer {
         return -MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
                 m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND)
                 * GameData.shouldInvertControls();
-    }
-
-    private Rotation2d getVacHeading() {
-        return m_vacuumHeadingTarget;
-    }
-
-    private void configureDriveModeCommand() {
-        m_robotDrive.removeDefaultCommand();
-        m_robotDrive.setDefaultCommand(createNormalDriveCommand());
     }
 
     private Command createNormalDriveCommand() {
@@ -170,9 +158,6 @@ public class RobotContainer {
 
         // Config buttons
         initAutoChooser();
-
-        // Set the initial drive mode/default command
-        configureDriveModeCommand();
     }
 
     // TODO
@@ -188,6 +173,7 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         // DEFAULT COMMANDS handled via drive mode management
+        m_robotDrive.setDefaultCommand(createNormalDriveCommand());
 
         // shooter should always be running due to inertia
         m_shooter.setDefaultCommand(m_shooter.coastCommand());
