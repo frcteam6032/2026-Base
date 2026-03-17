@@ -130,7 +130,7 @@ public class RobotContainer {
         double magnitude = Math.hypot(x, y);
 
         if (magnitude > VACUUM_TRANSLATION_DEADBAND) {
-            m_vacuumHeadingTarget = new Rotation2d(x, y);// .plus(new Rotation2d(Math.PI));
+            m_vacuumHeadingTarget = new Rotation2d(x, y);
         }
 
         return m_vacuumHeadingTarget;
@@ -311,7 +311,7 @@ public class RobotContainer {
 
             SmartDashboard.putNumber("Target Angle", twist.getRotation().getDegrees());
             SmartDashboard.putNumber("Target Distance", m_targetDistance);
-            return twist.getRotation();// .plus(new Rotation2d(Math.PI));
+            return twist.getRotation();
         };
 
         DoubleSupplier xSupplier = () -> x.getAsDouble();
