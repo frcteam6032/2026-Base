@@ -73,20 +73,20 @@ public class RobotContainer {
     private Rotation2d m_overBumpHeadingTarget = new Rotation2d();
 
     private double getRotationSpeed() {
-        return -MathUtil.applyDeadband(
+        return MathUtil.applyDeadband(
                 MathUtils.scaleDriverController(m_driverController.getRightX(), thetaLimiter,
                         m_driverController.getRightTriggerAxis()),
                 OIConstants.DRIVE_DEADBAND);
     }
 
     private double getYSpeed() {
-        return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftX(), yLimiter,
+        return -MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftX(), yLimiter,
                 m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND)
                 * GameData.shouldInvertControls();
     }
 
     private double getXSpeed() {
-        return MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
+        return -MathUtil.applyDeadband(MathUtils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
                 m_driverController.getRightTriggerAxis()), OIConstants.DRIVE_DEADBAND)
                 * GameData.shouldInvertControls();
     }
@@ -216,7 +216,7 @@ public class RobotContainer {
         // SHOOTER //
 
         m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed));
-                //.alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
+        // .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
 
         // Shuttle (move to A/B probably?)
         m_operatorController.rightBumper()
