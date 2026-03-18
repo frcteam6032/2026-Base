@@ -11,6 +11,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -47,7 +48,7 @@ public class RobotContainer {
 
     // COMMAND CONSTANTS //
     private static final double INFEED_SPEED = 4700.0; // 0.75;
-    private static final double FEEDER_SPEED = 0.9;
+    private static final double FEEDER_SPEED = 1.0;
     private static final double SPINDEXER_SPEED = 0.9;
     private static final double SHOOTER_SPIT_SPEED = 3000;
     private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
@@ -211,8 +212,8 @@ public class RobotContainer {
         // a or b should be autoshuttle
         m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(6000));
 
-        m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
-        // m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
+        // m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+        m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
 
         // INFEED ARM, MANUAL OVERRIDES //
         m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
@@ -296,7 +297,7 @@ public class RobotContainer {
             m_targetDistance = twist.getTranslation().getNorm();
 
             SmartDashboard.putNumber("Target Angle", twist.getRotation().getDegrees());
-            SmartDashboard.putNumber("Target Distance", m_targetDistance);
+            SmartDashboard.putNumber("Target Distance", Units.metersToFeet(m_targetDistance));
             return twist.getRotation();
         };
 

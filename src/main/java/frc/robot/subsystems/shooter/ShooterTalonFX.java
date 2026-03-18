@@ -19,14 +19,14 @@ public class ShooterTalonFX implements ShooterMotor {
     private static final int LEADER_ID = 13;
     private static final int FOLLOWER_ID = 14;
 
-    private static final double kP = 0.025;
+    private static final double kP = 0.45;
     private static final double kI = 0.0;
-    private static final double kD = 0.0005;
+    private static final double kD = 0.00;
     private static final double kS = 0.1;
 
     private static final double TIMEOUT_SECONDS = 0.050;
 
-    private static final double kFF = 12.0 / 106.3333; // rough kV (1 / freeSpeedRpm)
+    private static final double kFF = 12.0 / 108.3333;
 
     private final CANBus kCANBus = CANBus.roboRIO();
 
