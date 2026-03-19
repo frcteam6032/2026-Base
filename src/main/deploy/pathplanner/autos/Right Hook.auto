@@ -5,21 +5,27 @@
     "data": {
       "commands": [
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "Align, Feed, Spindexer, Shoot"
+            "pathName": "Right Bump To Middle"
           }
         },
         {
-          "type": "parallel",
+          "type": "named",
           "data": {
-            "commands": []
+            "name": "Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Hub To Right"
+            "pathName": "Left Middle Shoot"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Align, Feed, Spindexer, Shoot"
           }
         }
       ]
