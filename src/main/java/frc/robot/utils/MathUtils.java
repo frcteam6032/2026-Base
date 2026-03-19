@@ -7,7 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class MathUtils {
-    private static final double BASE_SPEED = 0.4;
+    public static double BASE_SPEED = 0.4;
 
     private static final double kTwistLookAheadBaseSeconds = 0.1;
     private static final double kTwistLookAheadMaxSeconds = 0.35;

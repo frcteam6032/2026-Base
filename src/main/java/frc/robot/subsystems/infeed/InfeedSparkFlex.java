@@ -25,7 +25,7 @@ public class InfeedSparkFlex implements InfeedMotor {
 
     public InfeedSparkFlex() {
         m_config.idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(80)
+                .smartCurrentLimit(55)
                 .inverted(true)
                 .voltageCompensation(12.0);
 

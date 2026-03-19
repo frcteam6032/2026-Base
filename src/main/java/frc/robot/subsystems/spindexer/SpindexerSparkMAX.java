@@ -16,7 +16,7 @@ public class SpindexerSparkMAX implements SpindexerMotor {
     private final RelativeEncoder m_encoder = m_motor.getEncoder();
 
     public SpindexerSparkMAX() {
-        m_config.idleMode(IdleMode.kCoast).smartCurrentLimit(40).inverted(true);
+        m_config.idleMode(IdleMode.kCoast).smartCurrentLimit(30).inverted(true);
         m_motor.configure(m_config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 

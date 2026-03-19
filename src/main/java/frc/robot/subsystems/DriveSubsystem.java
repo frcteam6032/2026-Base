@@ -86,6 +86,8 @@ public class DriveSubsystem extends SubsystemBase {
 
     private Rotation2d m_rotationTarget = new Rotation2d();
 
+    private boolean m_isRotationActive = false;
+
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
         m_gyro = new Pigeon2(Constants.DriveConstants.kGyroCanId);
@@ -128,8 +130,9 @@ public class DriveSubsystem extends SubsystemBase {
                     new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller
                                                     // for
                                                     // holonomic drive trains
-                            new PIDConstants(2., 0.0, 0.0), // Translation PID constants
-                            new PIDConstants(2, 0.0, 2) // Rotation PID constants
+                            new PIDConstants(2, 0.0, 0.0), // Translation PID constants
+                            // Maybe put back to 2??
+                            new PIDConstants(1, 0.0, 0) // Rotation PID constants
                     ),
                     config, // The robot configuration
                     () -> {
@@ -155,6 +158,10 @@ public class DriveSubsystem extends SubsystemBase {
         setupDashboard();
     }
 
+      public boolean isRotating() {
+        return m_isRotationActive;
+    }
+
     private void setupDashboard() {
         DashboardStore.add("Drive/X Velocity", () -> getChassisSpeeds().vxMetersPerSecond);
         DashboardStore.add("Drive/Y Velocity", () -> getChassisSpeeds().vyMetersPerSecond);
@@ -169,6 +176,8 @@ public class DriveSubsystem extends SubsystemBase {
         DashboardStore.add("Drive/Angle/BR", () -> m_rearRight.getPosition().angle.getDegrees());
 
         DashboardStore.add("Drive/Heading", () -> getHeading());
+
+        DashboardStore.add("Drive/Rotating", () -> isRotating());
 
         DashboardStore.add("Drive/Raw Heading", () -> m_gyro.getRotation2d().getDegrees());
         DashboardStore.addCustom(() -> {
@@ -426,6 +435,7 @@ public class DriveSubsystem extends SubsystemBase {
                 vision::targetValid);
     }
 
+  
     /**
      * Rotates the robot to an angle.
      * 
@@ -436,18 +446,20 @@ public class DriveSubsystem extends SubsystemBase {
      */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
         return run(() -> {
-            SmartDashboard.putNumber("Drive/vacHeading", target.get().getDegrees());
+            m_isRotationActive = true;
             Rotation2d targetRotation = target.get();
             double offset = (targetRotation.minus(getRotation2D())).getDegrees();
             // double offset = getRotation2D().minus(targetRotation).getDegrees();
 
             var output = controller.calculate(offset);
-            SmartDashboard.putNumber("Drive/output", output);
-            SmartDashboard.putNumber("Drive/offset", offset);
+     
 
             joystickDrive(xSpeed.getAsDouble(), ySpeed.getAsDouble(),
                     output,
                     true);
-        }).finallyDo(controller::reset);
+        }).finallyDo(() -> {
+            m_isRotationActive = false;
+            controller.reset();
+        });
     }
 }

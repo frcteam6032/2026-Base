@@ -6,14 +6,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.DashboardStore;
 
 public class InfeedArmSubsystem extends SubsystemBase {
-    private static final double OSCILLATE_STEP_DEGREES = 1.5;
-    private static final double OSCILLATE_HOLD_SECONDS = 0.25;
+    private static final double OSCILLATE_STEP_DEGREES = 3;
+    private static final double OSCILLATE_HOLD_SECONDS = 0.5;
 
     public final InfeedArm m_infeed;
 
     enum Location {
         Stow(0),
-        Deploy(27);
+        Deploy(30);
 
         public int Position;
 

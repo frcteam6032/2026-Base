@@ -94,7 +94,7 @@ public class RobotContainer {
                 () -> getXSpeed(),
                 () -> getYSpeed(),
                 () -> getRotationSpeed(),
-                () -> true);
+                () -> true).beforeStarting(() -> MathUtils.BASE_SPEED = 0.4);
     }
 
     private Command createVacuumDriveCommand() {
@@ -102,7 +102,10 @@ public class RobotContainer {
                 () -> getXSpeed(),
                 () -> getYSpeed(),
                 () -> getVacuumHeadingTarget())
-                .beforeStarting(() -> m_vacuumHeadingTarget = m_robotDrive.getRobotPoseEstimate().getRotation());
+                .beforeStarting(() -> {
+                    m_vacuumHeadingTarget = m_robotDrive.getRobotPoseEstimate().getRotation();
+                    MathUtils.BASE_SPEED = 0.4;
+                });
     }
 
     private Command createOverBumpDriveCommand() {
@@ -110,7 +113,10 @@ public class RobotContainer {
                 () -> getXSpeed(),
                 () -> getYSpeed(),
                 () -> m_overBumpHeadingTarget)
-                .beforeStarting(() -> updateOverBumpTarget());
+                .beforeStarting(() -> {
+                    MathUtils.BASE_SPEED = 0.8;
+                    updateOverBumpTarget();
+                });
     }
 
     private Rotation2d getVacuumHeadingTarget() {
@@ -184,17 +190,18 @@ public class RobotContainer {
 
         // ====== //
         // DRIVER //
-        // ====== //
+        // ====== //`
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
         // INFEED CONTROL //
         m_driverController.leftTrigger().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
-      //  m_driverController.x().whileTrue(m_infeedArm.oscillateArmCommand());
+        // PLZ TEST
+        m_driverController.x().whileTrue(m_infeedArm.oscillateArmCommand());
 
-        m_driverController.a().toggleOnTrue(createVacuumDriveCommand());
-        m_driverController.y().toggleOnTrue(createOverBumpDriveCommand());
+        m_driverController.a().whileTrue(createVacuumDriveCommand());
+        m_driverController.y().whileTrue(createOverBumpDriveCommand());
 
         // ======== //
         // OPERATOR //

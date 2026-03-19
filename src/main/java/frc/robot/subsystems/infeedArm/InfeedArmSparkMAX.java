@@ -45,7 +45,7 @@ public class InfeedArmSparkMAX implements InfeedArm {
         m_ff.kV(kFF);
 
         m_config.idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(60)
+                .smartCurrentLimit(40)
                 .inverted(false);
 
         m_config.softLimit
