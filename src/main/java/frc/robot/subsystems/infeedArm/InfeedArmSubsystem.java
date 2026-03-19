@@ -1,10 +1,14 @@
 package frc.robot.subsystems.infeedArm;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.utils.DashboardStore;
 
 public class InfeedArmSubsystem extends SubsystemBase {
+    private static final double OSCILLATE_STEP_DEGREES = 1.5;
+    private static final double OSCILLATE_HOLD_SECONDS = 0.25;
+
     public final InfeedArm m_infeed;
 
     enum Location {
@@ -59,23 +63,6 @@ public class InfeedArmSubsystem extends SubsystemBase {
         return runOnce(() -> setCurrentPosition(Location.Stow));
     }
 
-    private void oscillateArm() {
-        // If current position is deploy, go up and back down a few times
-        if (m_currentPosition == Location.Deploy) {
-            m_infeed.runToPosition(m_currentPosition.Position + 5);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            m_infeed.runToPosition(m_currentPosition.Position);
-        }
-    }
-
-    public Command oscillateArmCommand() {
-        return runOnce(this::oscillateArm);
-    }
-
     private void switchPosition() {
         switch (m_currentPosition) {
             case Deploy:
@@ -103,6 +90,36 @@ public class InfeedArmSubsystem extends SubsystemBase {
         }
 
         m_target += bump;
+    }
+
+    private void bumpArmUp() {
+        bump(OSCILLATE_STEP_DEGREES);
+    }
+
+    private void bumpArmDown() {
+        bump(-OSCILLATE_STEP_DEGREES);
+    }
+
+    private void resetToPresetTarget() {
+        m_override = false;
+        m_target = m_currentPosition.Position;
+    }
+
+    public Command oscillateArmCommand() {
+        Command oscillateCycle = Commands.repeatingSequence(
+                runOnce(this::bumpArmUp),
+                Commands.waitSeconds(OSCILLATE_HOLD_SECONDS),
+                runOnce(this::bumpArmDown),
+                Commands.waitSeconds(OSCILLATE_HOLD_SECONDS));
+
+        return Commands.sequence(
+                runOnce(() -> {
+                    if (!m_override) {
+                        m_override = true;
+                        m_target = m_currentPosition.Position;
+                    }
+                }),
+                oscillateCycle).finallyDo(interrupted -> resetToPresetTarget());
     }
 
     public Command bumpCommand(double bump) {
