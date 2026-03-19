@@ -13,7 +13,7 @@ public class InfeedArmSubsystem extends SubsystemBase {
 
     enum Location {
         Stow(0),
-        Deploy(30);
+        Deploy(36);
 
         public int Position;
 
