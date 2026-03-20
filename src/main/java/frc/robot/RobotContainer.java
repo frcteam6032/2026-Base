@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
@@ -144,8 +145,7 @@ public class RobotContainer {
 
     public Command alignAndShootCommand() {
         Command cmd = pointAtHubCommand(() -> 0, () -> 0)
-                .alongWith(m_feeder.intakeCommand(FEEDER_SPEED))
-                .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED))
+                .alongWith(feedCommand())
                 .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance));
         return cmd;
     }
@@ -165,7 +165,7 @@ public class RobotContainer {
 
         // Config buttons
         initAutoChooser();
-    }   
+    }
 
     // TODO
     private void configureNamedCommands() {
@@ -208,12 +208,13 @@ public class RobotContainer {
         // SHOOTER //
 
         m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed)
-                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)).alongWith(m_infeedArm.agitateCommand()));
+                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance))
+                .alongWith(m_infeedArm.agitateCommand()));
 
         // Shuttle (move to A/B probably?)
         m_operatorController.rightBumper()
-                .toggleOnTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
-                        .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)).alongWith(m_infeedArm.agitateCommand()));
+                .toggleOnTrue(pointToBestShuttleCommand(this::getXSpeed, this::getYSpeed)
+                        .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
 
         m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(5000));
 
@@ -226,12 +227,20 @@ public class RobotContainer {
         m_operatorController.start().whileTrue(m_infeedArm.agitateCommand());
 
         // FEED TO SHOOTER //
-        m_operatorController.y().whileTrue(m_feeder.intakeCommand(FEEDER_SPEED)
-                .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)));
+        m_operatorController.y().whileTrue(feedCommand());
 
         // OUTTAKE //
-        m_operatorController.leftBumper().whileTrue(m_feeder.intakeCommand(-FEEDER_SPEED)
-                .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED)));
+        m_operatorController.leftBumper().whileTrue(backspinCommand());
+    }
+
+    private ParallelCommandGroup backspinCommand() {
+        return m_feeder.intakeCommand(-FEEDER_SPEED)
+                .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED));
+    }
+
+    private ParallelCommandGroup feedCommand() {
+        return m_feeder.intakeCommand(FEEDER_SPEED)
+                .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)).alongWith(m_infeedArm.agitateCommand());
     }
 
     // Get the selected auto command
