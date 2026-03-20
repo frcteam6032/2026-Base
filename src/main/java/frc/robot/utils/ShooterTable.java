@@ -38,14 +38,14 @@ public class ShooterTable {
 
     private static void fillInTable() {
         // Shooter
-        addEntryShooter(Feet.of(7), RPM.of(2700));
-        addEntryShooter(Feet.of(8), RPM.of(2760));
-        addEntryShooter(Feet.of(9), RPM.of(2860));
-        addEntryShooter(Feet.of(10), RPM.of(2985));
-        addEntryShooter(Feet.of(11), RPM.of(3050));
-        addEntryShooter(Feet.of(12), RPM.of(3150));
-        addEntryShooter(Feet.of(13), RPM.of(3250));
-        addEntryShooter(Feet.of(14), RPM.of(3350));
+        addEntryShooter(Feet.of(8), RPM.of(2700));
+        addEntryShooter(Feet.of(9), RPM.of(2760));
+        addEntryShooter(Feet.of(10), RPM.of(2860));
+        addEntryShooter(Feet.of(11), RPM.of(2985));
+        addEntryShooter(Feet.of(12), RPM.of(3050));
+        addEntryShooter(Feet.of(13), RPM.of(3150));
+        addEntryShooter(Feet.of(14), RPM.of(3250));
+        addEntryShooter(Feet.of(15), RPM.of(3350));
 
         // Shuttle Table
         addEntryShuttle(Feet.of(10), RPM.of(2000));
