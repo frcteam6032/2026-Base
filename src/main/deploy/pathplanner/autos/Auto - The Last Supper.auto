@@ -5,15 +5,28 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Middle to Left Pickup"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Middle Start to Outpost"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake"
+                }
+              }
+            ]
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Left Pickup to Shoot"
+            "pathName": "Outpost to Right Shoot"
           }
         },
         {
