@@ -61,9 +61,9 @@ public class ShooterTable {
         fillInTable();
     }
 
-    public static ShooterTableEntry calcShooterTableEntryShooter(Distance distance) {
-        ShooterTableEntry closestLower = shooterTable.get(0);
-        ShooterTableEntry closestHigher = shooterTable.get(shooterTable.size() - 1);
+    private static ShooterTableEntry calculateEntry(Distance distance, ArrayList<ShooterTableEntry> table) {
+        ShooterTableEntry closestLower = table.get(0);
+        ShooterTableEntry closestHigher = table.get(table.size() - 1);
 
         if (distance.lte(closestLower.distance))
             return closestLower;
@@ -71,7 +71,7 @@ public class ShooterTable {
         if (distance.gte(closestHigher.distance))
             return closestHigher;
 
-        for (ShooterTableEntry entry : shooterTable) {
+        for (ShooterTableEntry entry : table) {
             if (entry.distance.lt(distance) &&
                     distance.minus(closestLower.distance).abs(Meters) > distance.minus(entry.distance).abs(Meters))
                 closestLower = entry;
@@ -89,31 +89,11 @@ public class ShooterTable {
         return new ShooterTableEntry(distance, angle);
     }
 
+    public static ShooterTableEntry calcShooterTableEntryShooter(Distance distance) {
+        return calculateEntry(distance, shooterTable);
+    }
+
     public static ShooterTableEntry calcShooterTableEntryShuttle(Distance distance) {
-        ShooterTableEntry closestLower = shuttleTable.get(0);
-        ShooterTableEntry closestHigher = shuttleTable.get(shooterTable.size() - 1);
-
-        if (distance.lte(closestLower.distance))
-            return closestLower;
-
-        if (distance.gte(closestHigher.distance))
-            return closestHigher;
-
-        for (ShooterTableEntry entry : shooterTable) {
-            if (entry.distance.lt(distance) &&
-                    distance.minus(closestLower.distance).abs(Meters) > distance.minus(entry.distance).abs(Meters))
-                closestLower = entry;
-            else if (entry.distance.gt(distance) &&
-                    distance.minus(closestHigher.distance).abs(Meters) > distance.minus(entry.distance).abs(Meters))
-                closestHigher = entry;
-            else if (entry.distance.minus(distance).abs(Meters) < 1e-9)
-                return entry;
-        }
-
-        double scale = distance.minus(closestLower.distance).div(closestHigher.distance.minus(closestLower.distance))
-                .magnitude();
-        var angle = closestHigher.wheelSpeed.minus(closestLower.wheelSpeed).times(scale).plus(closestLower.wheelSpeed);
-
-        return new ShooterTableEntry(distance, angle);
+        return calculateEntry(distance, shuttleTable);
     }
 }

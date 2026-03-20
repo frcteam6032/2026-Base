@@ -13,7 +13,8 @@ public class InfeedArmSubsystem extends SubsystemBase {
 
     enum Location {
         Stow(0),
-        Deploy(36);
+        Deploy(34),
+        Agitate(20);
 
         public int Position;
 
@@ -63,12 +64,22 @@ public class InfeedArmSubsystem extends SubsystemBase {
         return runOnce(() -> setCurrentPosition(Location.Stow));
     }
 
+    public Command goToAgitate() {
+        return runOnce(() -> setCurrentPosition(Location.Agitate));
+    }
+
+    public Command agitateCommand() {
+        return goToAgitate().andThen(Commands.waitSeconds(1)).andThen(goToDeploy()).andThen(Commands.waitSeconds(1))
+                .repeatedly();
+    }
+
     private void switchPosition() {
         switch (m_currentPosition) {
             case Deploy:
                 m_currentPosition = Location.Stow;
                 break;
             case Stow:
+            case Agitate:
                 m_currentPosition = Location.Deploy;
                 break;
             default:
