@@ -147,7 +147,8 @@ public class RobotContainer {
     public Command alignAndShootCommand() {
         Command cmd = pointAtHubCommand(() -> 0, () -> 0)
                 .alongWith(feedCommand())
-                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance));
+                .andThen(Commands.waitSeconds(1.0))
+                .andThen(m_shooter.automaticHubShooter(() -> m_targetDistance));
         return cmd;
     }
 
