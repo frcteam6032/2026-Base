@@ -12,7 +12,7 @@ import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkBase.ControlType;
 
 public class InfeedSparkFlex implements InfeedMotor {
-    private static final double kP = 0.00005;
+    private static final double kP = 0.00005 * 2.0;
     private static final double kFF = 13.0 / 6740.;
     private static final int MOTOR_ID = 12;
 
@@ -25,7 +25,7 @@ public class InfeedSparkFlex implements InfeedMotor {
 
     public InfeedSparkFlex() {
         m_config.idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(55)
+                .smartCurrentLimit(90)
                 .inverted(true)
                 .voltageCompensation(12.0);
 

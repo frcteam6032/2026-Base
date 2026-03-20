@@ -225,6 +225,7 @@ public class RobotContainer {
         // INFEED ARM, MANUAL OVERRIDES //
         m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
         m_operatorController.rightTrigger().onTrue(m_infeedArm.bumpCommand(2.5));
+        m_operatorController.start().whileTrue(m_infeedArm.agitateCommand());
 
         // FEED TO SHOOTER //
         m_operatorController.y().whileTrue(m_feeder.intakeCommand(FEEDER_SPEED)
