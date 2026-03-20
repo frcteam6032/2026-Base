@@ -214,8 +214,7 @@ public class RobotContainer {
         // SHOOTER //
 
         m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed)
-                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance))
-                .alongWith(m_infeedArm.agitateCommand()));
+                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
 
         // Shuttle (move to A/B probably?)
         m_operatorController.rightBumper()
