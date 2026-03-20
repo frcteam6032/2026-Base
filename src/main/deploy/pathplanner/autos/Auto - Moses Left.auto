@@ -7,7 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Actual Right Hook"
+            "pathName": "Back Left"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Actual Left Hook"
           }
         },
         {

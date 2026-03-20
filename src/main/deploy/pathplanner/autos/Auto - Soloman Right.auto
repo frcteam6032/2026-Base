@@ -7,13 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Actual Left Hook"
+            "pathName": "Back Right"
           }
         },
         {
-          "type": "named",
+          "type": "path",
           "data": {
-            "name": "Align, Feed, Spindexer, Shoot"
+            "pathName": "Pickup Only Right"
           }
         }
       ]

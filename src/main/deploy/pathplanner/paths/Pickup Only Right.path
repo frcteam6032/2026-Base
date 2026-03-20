@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.535954922894425,
-        "y": 2.534092526690391
+        "x": 3.471,
+        "y": 2.351
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.535954922894424,
-        "y": 2.534092526690391
+        "x": 4.470999999999999,
+        "y": 2.351
       },
       "isLocked": false,
       "linkedName": null
@@ -35,7 +35,7 @@
     {
       "name": "Intake",
       "waypointRelativePos": 0,
-      "endWaypointRelativePos": null,
+      "endWaypointRelativePos": 1.0,
       "command": null
     }
   ],

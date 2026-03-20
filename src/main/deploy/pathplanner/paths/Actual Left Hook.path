@@ -3,12 +3,12 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.5489487179487194,
+        "x": 3.526,
         "y": 5.558
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.247031115748454,
+        "x": 5.224082397799735,
         "y": 5.558
       },
       "isLocked": false,
@@ -134,7 +134,7 @@
     {
       "name": "Intake",
       "waypointRelativePos": 0.0,
-      "endWaypointRelativePos": 3.654485049833864,
+      "endWaypointRelativePos": 5.0,
       "command": null
     }
   ],
@@ -154,7 +154,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 3.6,
-    "rotation": 1.689634548261442
+    "rotation": 1.1084573980191683
   },
   "useDefaultConstraints": true
 }
