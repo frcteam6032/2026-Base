@@ -197,8 +197,6 @@ public class RobotContainer {
         m_driverController.leftTrigger().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
-        // PLZ TEST
-        m_driverController.x().whileTrue(m_infeedArm.oscillateArmCommand());
 
         m_driverController.a().whileTrue(createVacuumDriveCommand());
         m_driverController.y().whileTrue(createOverBumpDriveCommand());
