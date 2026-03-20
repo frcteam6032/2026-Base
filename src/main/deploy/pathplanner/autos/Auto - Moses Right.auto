@@ -23,29 +23,16 @@
               {
                 "type": "named",
                 "data": {
-                  "name": "Intake"
+                  "name": "Agitate"
                 }
               }
             ]
           }
         },
         {
-          "type": "race",
+          "type": "wait",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "Unstick Balls"
-                }
-              },
-              {
-                "type": "wait",
-                "data": {
-                  "waitTime": 3.0
-                }
-              }
-            ]
+            "waitTime": 2.0
           }
         },
         {

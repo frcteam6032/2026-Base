@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 0.9558589743589756,
+        "x": 0.83,
         "y": 5.883884615384615
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.388033747836225,
-        "y": 5.615383124451764
+        "x": 1.3469841635989255,
+        "y": 5.883884615384615
       },
       "isLocked": false,
       "linkedName": "Left Pickup"
     },
     {
       "anchor": {
-        "x": 1.9442564102564113,
-        "y": 5.314102564102564
+        "x": 2.1444627192982453,
+        "y": 5.57359649122807
       },
       "prevControl": {
-        "x": 1.1635749413194985,
-        "y": 5.727724631889838
+        "x": 1.6142798937768026,
+        "y": 5.854498914717259
       },
       "nextControl": null,
       "isLocked": false,
@@ -42,7 +42,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 155.0
+    "rotation": 143.39292518739245
   },
   "reversed": false,
   "folder": null,

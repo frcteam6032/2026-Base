@@ -30,22 +30,9 @@
           }
         },
         {
-          "type": "race",
+          "type": "named",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "Align, Feed, Spindexer, Shoot"
-                }
-              },
-              {
-                "type": "wait",
-                "data": {
-                  "waitTime": 5.0
-                }
-              }
-            ]
+            "name": "Align, Feed, Spindexer, Shoot"
           }
         },
         {
@@ -65,6 +52,12 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Agitate"
           }
         }
       ]

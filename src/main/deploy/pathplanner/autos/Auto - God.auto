@@ -24,6 +24,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Short Agitate"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Left Pickup to Shoot"

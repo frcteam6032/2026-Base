@@ -143,12 +143,18 @@ public class RobotContainer {
         m_overBumpHeadingTarget = Rotation2d.fromDegrees(lockedHeading);
     }
 
-    // Verify this 
+    // Verify this
+
+    private Command autoAgitateCommand() {
+        return m_infeedArm.agitateCommand().alongWith(m_infeed.intakeRPMCommand(INFEED_SPEED));
+    }
+
     public Command alignAndShootCommand() {
         Command cmd = pointAtHubCommand(() -> 0, () -> 0)
-                .alongWith(feedCommand())
-                .andThen(Commands.waitSeconds(1.0))
-                .andThen(m_shooter.automaticHubShooter(() -> m_targetDistance));
+                .alongWith(Commands.waitSeconds(1.0).andThen(m_shooter.automaticHubShooter(() -> m_targetDistance)))
+                .alongWith(autoAgitateCommand())
+                .alongWith(Commands.waitSeconds(2.0).andThen(feedCommand())).withTimeout(7.0);
+
         return cmd;
     }
 
@@ -156,10 +162,6 @@ public class RobotContainer {
         Command deployAndIntake = m_infeedArm.switchPositionCommand()
                 .andThen(m_infeed.intakeRPMCommand(INFEED_SPEED));
         return deployAndIntake;
-    }
-
-    public Command autoArmMoveCMD() {
-        return m_infeedArm.agitateCommand();
     }
 
     public RobotContainer() {
@@ -177,7 +179,8 @@ public class RobotContainer {
     private void configureNamedCommands() {
         NamedCommands.registerCommand("Align, Feed, Spindexer, Shoot", alignAndShootCommand());
         NamedCommands.registerCommand("Intake", autoIntakeCommand());
-        NamedCommands.registerCommand("Unstick Balls", autoArmMoveCMD());
+        NamedCommands.registerCommand("Agitate", autoAgitateCommand().withTimeout(5.0));
+        NamedCommands.registerCommand("Short Agitate", autoAgitateCommand().withTimeout(2.0));
     }
 
     private void initAutoChooser() {
