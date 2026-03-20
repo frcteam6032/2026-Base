@@ -68,7 +68,8 @@ public class InfeedArmSubsystem extends SubsystemBase {
     }
 
     public Command agitateCommand() {
-        return goToAgitate().andThen(Commands.waitSeconds(OSCILLATE_DELAY)).andThen(goToDeploy()).andThen(Commands.waitSeconds(0.4))
+        return goToAgitate().andThen(Commands.waitSeconds(OSCILLATE_DELAY)).andThen(goToDeploy())
+                .andThen(Commands.waitSeconds(0.4))
                 .repeatedly()
                 .finallyDo(() -> setCurrentPosition(Location.Deploy));
     }
