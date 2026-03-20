@@ -69,7 +69,6 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public ShooterTableEntry predictedTableEntryHub(double dist) {
-
         return ShooterTable.calcShooterTableEntryShooter(Meters.of(dist));
     }
 

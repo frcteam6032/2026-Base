@@ -217,11 +217,10 @@ public class RobotContainer {
                 .toggleOnTrue(pointToBestShuttleCommand(() -> getXSpeed(), () -> getYSpeed())
                         .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
 
-        // a or b should be autoshuttle
-        m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(6000));
+        m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(5000));
 
-        // m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
-        m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
+        m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
+        // m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
 
         // INFEED ARM, MANUAL OVERRIDES //
         m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
