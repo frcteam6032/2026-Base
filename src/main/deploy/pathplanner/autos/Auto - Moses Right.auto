@@ -11,9 +11,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "Actual Right Hook"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Actual Right Hook"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake"
+                }
+              }
+            ]
           }
         },
         {

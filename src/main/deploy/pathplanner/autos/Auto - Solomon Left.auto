@@ -11,9 +11,22 @@
           }
         },
         {
-          "type": "path",
+          "type": "race",
           "data": {
-            "pathName": "Pickup Only Left"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Pickup Only Left"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake"
+                }
+              }
+            ]
           }
         }
       ]
