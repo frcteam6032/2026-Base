@@ -80,16 +80,16 @@
     },
     {
       "anchor": {
-        "x": 1.7814615384615395,
-        "y": 2.6279871794871794
+        "x": 1.6768076923076936,
+        "y": 2.3605384615384617
       },
       "prevControl": {
-        "x": 2.931273820759987,
-        "y": 2.4613477182845065
+        "x": 2.826619974606141,
+        "y": 2.1938990003357888
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Right Shoot"
     }
   ],
   "rotationTargets": [
@@ -130,14 +130,7 @@
     }
   ],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "Intake",
-      "waypointRelativePos": 0.0,
-      "endWaypointRelativePos": 5.0,
-      "command": null
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 4.5,
     "maxAcceleration": 2.2,
@@ -148,7 +141,7 @@
   },
   "goalEndState": {
     "velocity": 1.0,
-    "rotation": 26.283732098066455
+    "rotation": -148.19061071220685
   },
   "reversed": false,
   "folder": null,

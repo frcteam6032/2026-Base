@@ -49,7 +49,7 @@ public class RobotContainer {
     // COMMAND CONSTANTS //
     private static final double INFEED_SPEED = 4700.0; // 0.75;
     private static final double FEEDER_SPEED = 1.0;
-    private static final double SPINDEXER_SPEED = 0.9;
+    private static final double SPINDEXER_SPEED = 1.0;
     private static final double SHOOTER_SPIT_SPEED = 3000;
     private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
 
@@ -165,7 +165,7 @@ public class RobotContainer {
 
         // Config buttons
         initAutoChooser();
-    }
+    }   
 
     // TODO
     private void configureNamedCommands() {
