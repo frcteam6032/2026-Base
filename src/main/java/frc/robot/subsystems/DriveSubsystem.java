@@ -309,7 +309,7 @@ public class DriveSubsystem extends SubsystemBase {
      *                      field.
      */
     public void driveAuto(ChassisSpeeds speeds, boolean fieldRelative) {
-        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative);
+        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, -speeds.omegaRadiansPerSecond, fieldRelative);
     }
 
     /**
@@ -359,6 +359,14 @@ public class DriveSubsystem extends SubsystemBase {
         return new Pose2d(m_poseEstimator.getEstimatedPosition().getX(),
                 m_poseEstimator.getEstimatedPosition().getY(),
                 m_poseEstimator.getEstimatedPosition().getRotation());
+    }
+
+    public Pose2d autoPoseEstimate() {
+            // Returns the estimated robot position (x,y,yaw)
+        // WARNING the negating of x & y could cause issues with auto driving
+        return new Pose2d(m_poseEstimator.getEstimatedPosition().getX(),
+                m_poseEstimator.getEstimatedPosition().getY(),
+                m_poseEstimator.getEstimatedPosition().getRotation().times(-1));
     }
 
     public ChassisSpeeds getChassisSpeeds() {
