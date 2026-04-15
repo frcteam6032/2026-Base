@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Limelight {
@@ -128,19 +129,27 @@ public class Limelight {
     }
 
     public double getDistance() {
-        // Using the height of the target and the height of the camera, we can calculate
-        // the distance to the target using the formula:
-        // distance = (targetHeight - cameraHeight) / tan(cameraAngle + targetAngle)
-        Optional<Pose3d> tagPose = m_layout.getTagPose((int) getFiducialID());
-        if (tagPose.isEmpty())
-            return -1;
 
-        // Z is height, positive is up (thank God)
-        double targetHeightMeters = tagPose.get().getZ();
-        double targetAngle = getYOffset();
+        double targetOffsetAngle_Vertical = getYOffset();
 
-        return (targetHeightMeters - CAMERA_HEIGHT_METERS)
-                / Math.tan(Math.toRadians(CAMERA_ANGLE + targetAngle));
+        // how many degrees back is your limelight rotated from perfectly vertical?
+        double limelightMountAngleDegrees = 23.5;
+
+        // distance from the center of the Limelight lens to the floor
+        double limelightLensHeightInches = 21.7;
+
+        // distance from the target to the floor
+        double goalHeightInches = 42.8;
+
+        double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
+        double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
+
+        // calculate distance
+        double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches)
+                / Math.tan(angleToGoalRadians);
+
+        // Return meteres
+        return Units.inchesToMeters(distanceFromLimelightToGoalInches);
     }
 
     /**

@@ -26,6 +26,7 @@ import frc.robot.subsystems.infeed.InfeedSubsystem;
 import frc.robot.subsystems.infeedArm.InfeedArmSubsystem;
 import frc.robot.subsystems.shooter.ShooterSubsystem;
 import frc.robot.subsystems.spindexer.SpindexerSubsystem;
+import frc.robot.utils.DashboardStore;
 import frc.robot.utils.GameData;
 import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
@@ -149,13 +150,17 @@ public class RobotContainer {
         return m_infeedArm.agitateCommand().alongWith(m_infeed.intakeRPMCommand(INFEED_SPEED));
     }
 
-    public Command alignAndShootCommand() {
-        Command cmd = pointAtHubCommand(() -> 0, () -> 0)
-                .alongWith(Commands.waitSeconds(1.0).andThen(m_shooter.automaticHubShooter(() -> m_targetDistance)))
-                .alongWith(autoAgitateCommand().withTimeout(2.0).andThen(feedCommand())).withTimeout(7.0);
-
-        return cmd;
-    }
+    /*
+     * public Command alignAndShootCommand() {
+     * Command cmd = pointAtHubCommand(() -> 0, () -> 0)
+     * .alongWith(Commands.waitSeconds(1.0).andThen(m_shooter.automaticHubShooter(()
+     * -> m_targetDistance)))
+     * .alongWith(autoAgitateCommand().withTimeout(2.0).andThen(feedCommand())).
+     * withTimeout(7.0);
+     * 
+     * return cmd;
+     * }
+     */
 
     public Command autoIntakeCommand() {
         Command deployAndIntake = m_infeedArm.switchPositionCommand()
@@ -165,6 +170,9 @@ public class RobotContainer {
 
     public RobotContainer() {
         SmartDashboard.putNumber("Auto Delay", 0.0);
+
+        DashboardStore.add("Limelight/Distance", m_limelight::getDistance);
+
         configureNamedCommands();
 
         // Configure the buttons & default commands
@@ -176,7 +184,8 @@ public class RobotContainer {
 
     // TODO
     private void configureNamedCommands() {
-        NamedCommands.registerCommand("Align, Feed, Spindexer, Shoot", alignAndShootCommand());
+        // NamedCommands.registerCommand("Align, Feed, Spindexer, Shoot",
+        // alignAndShootCommand());
         NamedCommands.registerCommand("Intake", autoIntakeCommand());
         NamedCommands.registerCommand("Agitate", autoAgitateCommand().withTimeout(5.0));
         NamedCommands.registerCommand("Short Agitate", autoAgitateCommand().withTimeout(2.0));
@@ -207,8 +216,8 @@ public class RobotContainer {
         m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
         m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
 
-        m_driverController.a().whileTrue(createVacuumDriveCommand());
-        m_driverController.y().whileTrue(createOverBumpDriveCommand());
+        // m_driverController.a().whileTrue(createVacuumDriveCommand());
+        // m_driverController.y().whileTrue(createOverBumpDriveCommand());
 
         // ======== //
         // OPERATOR //
@@ -216,15 +225,15 @@ public class RobotContainer {
 
         // SHOOTER //
 
-        m_operatorController.x().toggleOnTrue(pointAtHubCommand(this::getXSpeed, this::getYSpeed)
+        m_operatorController.x().toggleOnTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
                 .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
 
         // Shuttle (move to A/B probably?)
-        m_operatorController.rightBumper()
-                .toggleOnTrue(pointToBestShuttleCommand(this::getXSpeed, this::getYSpeed)
-                        .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
+        // m_operatorController.rightBumper()
+        // .toggleOnTrue(pointToBestShuttleCommand(this::getXSpeed, this::getYSpeed)
+        // .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
 
-        m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(5000));
+        // m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(5000));
 
         m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
         // m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
@@ -330,11 +339,17 @@ public class RobotContainer {
         return m_robotDrive.rotateToAngleCommand(xSupplier, ySupplier, targetSupplier);
     }
 
-    public Command pointAtHubCommand(DoubleSupplier x, DoubleSupplier y) {
-        return suppliedPointCommand(x, y, () -> twistToLocation(HUB_TARGET_POSE));
+    public Command pointAtHubCommand(Limelight limelight, DoubleSupplier x, DoubleSupplier y) {
+        m_targetDistance = limelight.getDistance();
+        return m_robotDrive.visionRotateCommand(limelight, x, y);
     }
 
     public Command pointToBestShuttleCommand(DoubleSupplier x, DoubleSupplier y) {
         return suppliedPointCommand(x, y, this::closestShuttleTwist);
+    }
+
+    public double getTargetDistance() {
+        m_targetDistance = m_limelight.getDistance();
+        return m_targetDistance;
     }
 }
