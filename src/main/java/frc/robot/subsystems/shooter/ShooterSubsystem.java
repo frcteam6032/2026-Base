@@ -4,13 +4,14 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.DoubleSupplier;
-import java.util.function.IntSupplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.vision.Limelight;
+import frc.robot.RobotContainer.FireType;
 import frc.robot.utils.DashboardStore;
 import frc.robot.utils.ShooterTable;
 import frc.robot.utils.ShooterTable.ShooterTableEntry;
@@ -114,17 +115,34 @@ public class ShooterSubsystem extends SubsystemBase {
         });
     }
 
-    public Command automaticHubShooter(DoubleSupplier dist, IntSupplier fireTypeSupplier) {
+    public Command automaticHubShooter(DoubleSupplier dist, FireType mode) {
         return run(() -> {
-            int fireType = fireTypeSupplier.getAsInt();
+            if (mode == FireType.Assisted || mode == FireType.Manual) {
+                setVelocityRPM(3000);
 
-            if (fireType == 1) {
+            } else if (mode == FireType.Automatic) {
                 ShooterTableEntry entry = predictedTableEntryHub(dist.getAsDouble());
                 setVelocityRPM(entry.wheelSpeed.in(RPM));
-            } else {
-                setVelocityRPM(3000);
             }
         });
+    }
+
+    public double getShotProbability() {
+        double shotProbability = 0.0;
+        // Determine if a 3000 RPM shot would make it at the current distance.
+        // We use the shooter table to find what distance corresponds to 3000 RPM.
+        double currentDistance = m_distance;
+        if (Double.isFinite(currentDistance)) {
+            ShooterTableEntry requiredEntry = predictedTableEntryHub(currentDistance);
+            double requiredRPM = requiredEntry.wheelSpeed.in(RPM);
+
+            double error = Math.abs(requiredRPM - 3000.0);
+            shotProbability = MathUtil.clamp(1.0 - (error / 500.0), 0.0, 1.0);
+        } else {
+            shotProbability = 0.0;
+        }
+
+        return shotProbability;
     }
 
     public double getVelocityRPM() {

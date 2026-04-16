@@ -142,7 +142,7 @@ public class Limelight {
         double goalHeightInches = 42.8;
 
         double angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-        double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
+        double angleToGoalRadians = angleToGoalDegrees * (3.141592653 / 180.0);
 
         // calculate distance
         double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches)

@@ -32,9 +32,10 @@ import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
 
 public class RobotContainer {
-    enum FireType {
+    public enum FireType {
         Manual(0),
-        Assisted(1);
+        Assisted(1),
+        Automatic(2);
 
         public int Type;
 
@@ -106,12 +107,14 @@ public class RobotContainer {
     public RobotContainer() {
         fireTypeChooser.setDefaultOption("Manual", FireType.Manual);
         fireTypeChooser.addOption("Assisted", FireType.Assisted);
-
+        fireTypeChooser.addOption("Automatic", FireType.Automatic);
         SmartDashboard.putData("Fire Type", fireTypeChooser);
 
         SmartDashboard.putNumber("Auto Delay", 0.0);
 
         DashboardStore.add("Limelight/Distance", m_limelight::getDistance);
+
+        DashboardStore.add("Probability/Shot", m_shooter::getShotProbability);
 
         // Configure the buttons & default commands
         configureButtonBindings();
@@ -146,28 +149,20 @@ public class RobotContainer {
         m_driverController.y().onTrue(m_infeedArm.switchPositionCommand());
 
         // SHOOTER //
-
-        m_driverController.rightTrigger().toggleOnTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
-                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, () -> getSelectedFireType().Type)));
+        m_driverController.rightTrigger()
+                .toggleOnTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
+                        .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED))
+                        .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, getSelectedFireType())));
 
         // INFEED ARM, MANUAL OVERRIDES //
         // m_driverController.start().whileTrue(m_infeedArm.agitateCommand());
 
         // FEED TO SHOOTER //
-        m_driverController.a().whileTrue(feedCommand());
+        // Put this back
+        // m_driverController.a().whileTrue(feedCommand());
 
         // OUTTAKE //
         // m_driverController.leftBumper().whileTrue(backspinCommand());
-    }
-
-    private ParallelCommandGroup backspinCommand() {
-        return m_feeder.intakeCommand(-FEEDER_SPEED)
-                .alongWith(m_spindexer.spinCommand(-SPINDEXER_SPEED));
-    }
-
-    private ParallelCommandGroup feedCommand() {
-        return m_feeder.intakeCommand(FEEDER_SPEED)
-                .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED)).alongWith(m_infeedArm.agitateCommand());
     }
 
     // Get the selected auto command
@@ -196,6 +191,7 @@ public class RobotContainer {
         return selected != null ? selected : FireType.Manual;
     }
 
+    // Delete this after testing
     public double getTargetDistance() {
         m_targetDistance = m_limelight.getDistance();
         return m_targetDistance;
