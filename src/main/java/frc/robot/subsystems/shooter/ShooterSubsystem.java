@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.IntSupplier;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -113,10 +114,16 @@ public class ShooterSubsystem extends SubsystemBase {
         });
     }
 
-    public Command automaticHubShooter(DoubleSupplier dist) {
+    public Command automaticHubShooter(DoubleSupplier dist, IntSupplier fireTypeSupplier) {
         return run(() -> {
-            ShooterTableEntry entry = predictedTableEntryHub(dist.getAsDouble());
-            setVelocityRPM(entry.wheelSpeed.in(RPM));
+            int fireType = fireTypeSupplier.getAsInt();
+
+            if (fireType == 1) {
+                ShooterTableEntry entry = predictedTableEntryHub(dist.getAsDouble());
+                setVelocityRPM(entry.wheelSpeed.in(RPM));
+            } else {
+                setVelocityRPM(3000);
+            }
         });
     }
 

@@ -32,6 +32,19 @@ import frc.robot.utils.MathUtils;
 import frc.robot.vision.Limelight;
 
 public class RobotContainer {
+    enum FireType {
+        Manual(0),
+        Assisted(1);
+
+        public int Type;
+
+        private FireType(int type) {
+            Type = type;
+        }
+    }
+
+    private final SendableChooser<FireType> fireTypeChooser = new SendableChooser<>();
+
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
@@ -52,14 +65,8 @@ public class RobotContainer {
     private static final double INFEED_SPEED = 4700.0; // 0.75;
     private static final double FEEDER_SPEED = 1.0;
     private static final double SPINDEXER_SPEED = 1.0;
-    private static final double SHOOTER_SPIT_SPEED = 3000;
-    private static final double VACUUM_TRANSLATION_DEADBAND = 0.05;
 
     // POSE CONSTANTS //
-    private static final Pose2d HUB_TARGET_POSE = new Pose2d(4.57, 4.04, new Rotation2d());
-    private static final Pose2d SHUTTLE_POSE_1 = new Pose2d(1.5, 1.0, new Rotation2d());
-    private static final Pose2d SHUTTLE_POSE_2 = new Pose2d(1.5, 7.0, new Rotation2d());
-
     private double m_targetDistance = 0.0;
 
     // AUTO/DRIVER STUFF //
@@ -68,9 +75,6 @@ public class RobotContainer {
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(8.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(8.);
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
-
-    private Rotation2d m_vacuumHeadingTarget = new Rotation2d();
-    private Rotation2d m_overBumpHeadingTarget = new Rotation2d();
 
     private double getRotationSpeed() {
         return MathUtil.applyDeadband(
@@ -99,96 +103,21 @@ public class RobotContainer {
                 () -> true).beforeStarting(() -> MathUtils.BASE_SPEED = 0.4);
     }
 
-    private Command createVacuumDriveCommand() {
-        return m_robotDrive.rotateToAngleCommand(
-                () -> getXSpeed(),
-                () -> getYSpeed(),
-                () -> getVacuumHeadingTarget())
-                .beforeStarting(() -> {
-                    m_vacuumHeadingTarget = m_robotDrive.getRobotPoseEstimate().getRotation();
-                    MathUtils.BASE_SPEED = 0.4;
-                });
-    }
-
-    private Command createOverBumpDriveCommand() {
-        return m_robotDrive.rotateToAngleCommand(
-                () -> getXSpeed(),
-                () -> getYSpeed(),
-                () -> m_overBumpHeadingTarget)
-                .beforeStarting(() -> {
-                    MathUtils.BASE_SPEED = 0.8;
-                    updateOverBumpTarget();
-                });
-    }
-
-    private Rotation2d getVacuumHeadingTarget() {
-        double x = getXSpeed();
-        double y = getYSpeed();
-        double magnitude = Math.hypot(x, y);
-
-        if (magnitude > VACUUM_TRANSLATION_DEADBAND) {
-            m_vacuumHeadingTarget = new Rotation2d(x, y);
-        }
-
-        return m_vacuumHeadingTarget;
-    }
-
-    private void updateOverBumpTarget() {
-        double yaw = m_robotDrive.getHeading();
-        yaw = ((yaw % 360.0) + 360.0) % 360.0;
-
-        double deltaTo0 = Math.min(yaw, 360.0 - yaw);
-        double deltaTo180 = Math.min(Math.abs(yaw - 180.0), 360.0 - Math.abs(yaw - 180.0));
-
-        double lockedHeading = (deltaTo0 <= deltaTo180) ? 0.0 : 180.0;
-        m_overBumpHeadingTarget = Rotation2d.fromDegrees(lockedHeading);
-    }
-
-    // Verify this
-
-    private Command autoAgitateCommand() {
-        return m_infeedArm.agitateCommand().alongWith(m_infeed.intakeRPMCommand(INFEED_SPEED));
-    }
-
-    /*
-     * public Command alignAndShootCommand() {
-     * Command cmd = pointAtHubCommand(() -> 0, () -> 0)
-     * .alongWith(Commands.waitSeconds(1.0).andThen(m_shooter.automaticHubShooter(()
-     * -> m_targetDistance)))
-     * .alongWith(autoAgitateCommand().withTimeout(2.0).andThen(feedCommand())).
-     * withTimeout(7.0);
-     * 
-     * return cmd;
-     * }
-     */
-
-    public Command autoIntakeCommand() {
-        Command deployAndIntake = m_infeedArm.switchPositionCommand()
-                .andThen(m_infeed.intakeRPMCommand(INFEED_SPEED));
-        return deployAndIntake;
-    }
-
     public RobotContainer() {
+        fireTypeChooser.setDefaultOption("Manual", FireType.Manual);
+        fireTypeChooser.addOption("Assisted", FireType.Assisted);
+
+        SmartDashboard.putData("Fire Type", fireTypeChooser);
+
         SmartDashboard.putNumber("Auto Delay", 0.0);
 
         DashboardStore.add("Limelight/Distance", m_limelight::getDistance);
-
-        configureNamedCommands();
 
         // Configure the buttons & default commands
         configureButtonBindings();
 
         // Config buttons
         initAutoChooser();
-    }
-
-    // TODO
-    private void configureNamedCommands() {
-        // NamedCommands.registerCommand("Align, Feed, Spindexer, Shoot",
-        // alignAndShootCommand());
-        NamedCommands.registerCommand("Intake", autoIntakeCommand());
-        NamedCommands.registerCommand("Agitate", autoAgitateCommand().withTimeout(5.0));
-        NamedCommands.registerCommand("Short Agitate", autoAgitateCommand().withTimeout(2.0));
     }
 
     private void initAutoChooser() {
@@ -212,42 +141,23 @@ public class RobotContainer {
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
         // INFEED CONTROL //
-        m_driverController.leftTrigger().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
-        m_driverController.leftBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
-        m_driverController.rightBumper().onTrue(m_infeedArm.switchPositionCommand());
-
-        // m_driverController.a().whileTrue(createVacuumDriveCommand());
-        // m_driverController.y().whileTrue(createOverBumpDriveCommand());
-
-        // ======== //
-        // OPERATOR //
-        // ======== //
+        m_driverController.leftBumper().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
+        m_driverController.rightBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
+        m_driverController.y().onTrue(m_infeedArm.switchPositionCommand());
 
         // SHOOTER //
 
-        m_operatorController.x().toggleOnTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
-                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance)));
-
-        // Shuttle (move to A/B probably?)
-        // m_operatorController.rightBumper()
-        // .toggleOnTrue(pointToBestShuttleCommand(this::getXSpeed, this::getYSpeed)
-        // .alongWith(m_shooter.automaticShuttle(() -> m_targetDistance)));
-
-        // m_operatorController.a().toggleOnTrue(m_shooter.runRPMCommand(5000));
-
-        m_operatorController.b().toggleOnTrue(m_shooter.runRPMCommand(SHOOTER_SPIT_SPEED));
-        // m_operatorController.b().toggleOnTrue(m_shooter.runTargetCommmandRPM());
+        m_driverController.rightTrigger().toggleOnTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
+                .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, () -> getSelectedFireType().Type)));
 
         // INFEED ARM, MANUAL OVERRIDES //
-        m_operatorController.leftTrigger().onTrue(m_infeedArm.bumpCommand(-2.5));
-        m_operatorController.rightTrigger().onTrue(m_infeedArm.bumpCommand(2.5));
-        m_operatorController.start().whileTrue(m_infeedArm.agitateCommand());
+        // m_driverController.start().whileTrue(m_infeedArm.agitateCommand());
 
         // FEED TO SHOOTER //
-        m_operatorController.y().whileTrue(feedCommand());
+        m_driverController.a().whileTrue(feedCommand());
 
         // OUTTAKE //
-        m_operatorController.leftBumper().whileTrue(backspinCommand());
+        // m_driverController.leftBumper().whileTrue(backspinCommand());
     }
 
     private ParallelCommandGroup backspinCommand() {
@@ -276,76 +186,14 @@ public class RobotContainer {
         m_limelight.setRobotOrientation(m_robotDrive.getHeading());
     }
 
-    public Pose2d convertToRed(Pose2d pose) {
-        double fieldLength = 16.54; // meters
-        return new Pose2d(fieldLength - pose.getX(), pose.getY(),
-                new Rotation2d(Math.PI).minus(pose.getRotation()));
-    }
-
-    public Pose2d twistToLocation(Pose2d targetPose) {
-        if (GameData.getIsRed()) {
-            targetPose = convertToRed(targetPose);
-        }
-
-        Pose2d robotPose = m_robotDrive.getRobotPoseEstimate();
-
-        ChassisSpeeds speeds = m_robotDrive.getChassisSpeeds();
-        Pose2d poseForCalculation = robotPose;
-
-        // Delete this block to not use prediction, won't break anything
-        if (speeds != null) {
-            double lookAheadSeconds = MathUtils.getTwistLookAheadSeconds(speeds);
-            poseForCalculation = MathUtils.predictPose(robotPose, speeds, lookAheadSeconds);
-        }
-
-        double deltaX = targetPose.getX() - poseForCalculation.getX();
-        double deltaY = targetPose.getY() - poseForCalculation.getY();
-        Rotation2d targetAngle = new Rotation2d(Math.atan2(deltaY, deltaX));
-
-        // add 180 deg, because we always want the shooter pointing towards the twist
-        // point.
-        return new Pose2d(deltaX, deltaY, targetAngle.plus(new Rotation2d(Math.PI)));
-    }
-
-    public Pose2d closestShuttleTwist() {
-        Pose2d shuttle1Twist = twistToLocation(SHUTTLE_POSE_1);
-        Pose2d shuttle2Twist = twistToLocation(SHUTTLE_POSE_2);
-
-        // Get the distance from the robot pose to each shuttle and pick the closer one
-        if (shuttle1Twist.getTranslation().getNorm() < shuttle2Twist.getTranslation().getNorm()) {
-            return shuttle1Twist;
-        } else {
-            return shuttle2Twist;
-        }
-    }
-
-    /**
-     * x and y are joystick commands
-     */
-    private Command suppliedPointCommand(DoubleSupplier x, DoubleSupplier y, Supplier<Pose2d> twistSupplier) {
-        Supplier<Rotation2d> targetSupplier = () -> {
-            var twist = twistSupplier.get();
-
-            m_targetDistance = twist.getTranslation().getNorm();
-
-            SmartDashboard.putNumber("Target Angle", twist.getRotation().getDegrees());
-            SmartDashboard.putNumber("Target Distance", Units.metersToFeet(m_targetDistance));
-            return twist.getRotation();
-        };
-
-        DoubleSupplier xSupplier = () -> x.getAsDouble();
-        DoubleSupplier ySupplier = () -> y.getAsDouble();
-
-        return m_robotDrive.rotateToAngleCommand(xSupplier, ySupplier, targetSupplier);
-    }
-
     public Command pointAtHubCommand(Limelight limelight, DoubleSupplier x, DoubleSupplier y) {
         m_targetDistance = limelight.getDistance();
         return m_robotDrive.visionRotateCommand(limelight, x, y);
     }
 
-    public Command pointToBestShuttleCommand(DoubleSupplier x, DoubleSupplier y) {
-        return suppliedPointCommand(x, y, this::closestShuttleTwist);
+    private FireType getSelectedFireType() {
+        FireType selected = fireTypeChooser.getSelected();
+        return selected != null ? selected : FireType.Manual;
     }
 
     public double getTargetDistance() {
