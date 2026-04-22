@@ -112,9 +112,9 @@ public class RobotContainer {
 
         SmartDashboard.putNumber("Auto Delay", 0.0);
 
-        DashboardStore.add("Limelight/Distance", m_limelight::getDistance);
+        DashboardStore.add("Limelight/Distance", m_limelight::getDistanceToPoint);
 
-        DashboardStore.add("Probability/Shot", m_shooter::getShotProbability);
+        DashboardStore.add("Probability/Shot", () -> m_shooter.getShotProbability() * 100.0);
 
         // Configure the buttons & default commands
         configureButtonBindings();
@@ -144,14 +144,15 @@ public class RobotContainer {
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.zero()));
 
         // INFEED CONTROL //
-        m_driverController.leftBumper().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED));
-        m_driverController.rightBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED));
+        m_driverController.leftBumper().whileTrue(m_infeed.intakeRPMCommand(INFEED_SPEED / 2));
+        m_driverController.rightBumper().whileTrue(m_infeed.intakeCommand(-INFEED_SPEED / 2));
         m_driverController.y().onTrue(m_infeedArm.switchPositionCommand());
 
         // SHOOTER //
         m_driverController.rightTrigger()
-                .toggleOnTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
+                .whileTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
                         .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED))
+                        .alongWith(m_feeder.intakeCommand(FEEDER_SPEED))
                         .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, getSelectedFireType())));
 
         // INFEED ARM, MANUAL OVERRIDES //
@@ -182,7 +183,7 @@ public class RobotContainer {
     }
 
     public Command pointAtHubCommand(Limelight limelight, DoubleSupplier x, DoubleSupplier y) {
-        m_targetDistance = limelight.getDistance();
+        m_targetDistance = limelight.getDistanceToPoint();
         return m_robotDrive.visionRotateCommand(limelight, x, y);
     }
 
@@ -193,7 +194,7 @@ public class RobotContainer {
 
     // Delete this after testing
     public double getTargetDistance() {
-        m_targetDistance = m_limelight.getDistance();
+        m_targetDistance = m_limelight.getDistanceToPoint();
         return m_targetDistance;
     }
 }
