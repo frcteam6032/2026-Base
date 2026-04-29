@@ -1,9 +1,11 @@
 package frc.robot.subsystems.shooter;
 
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.vision.Limelight;
 import frc.robot.RobotContainer.FireType;
+import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.utils.DashboardStore;
 import frc.robot.utils.ShooterTable;
 import frc.robot.utils.ShooterTable.ShooterTableEntry;
@@ -19,6 +22,7 @@ import frc.robot.utils.ShooterTable.ShooterTableEntry;
 public class ShooterSubsystem extends SubsystemBase {
     private final ShooterMotor m_shooter;
     private final Limelight m_limelight;
+    private final DriveSubsystem m_driveSubsystem;
 
     private double m_targetRPM = 0.0;
 
@@ -30,9 +34,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private static final double SHOOTER_COAST_VELOCITY = 700;
 
-    public ShooterSubsystem(Limelight limelight) {
+    public ShooterSubsystem(Limelight limelight, DriveSubsystem driveSubsystem) {
         // m_shooter = new ShooterSparkMAX();
         m_limelight = limelight;
+        m_driveSubsystem = driveSubsystem;
         m_shooter = new ShooterTalonFX();
 
         setupDashboard();
@@ -67,11 +72,11 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public ShooterTableEntry predictedTableEntryShuttle(double dist) {
-        return ShooterTable.calcShooterTableEntryShuttle(Meters.of(dist));
+        return ShooterTable.calcShooterTableEntryShuttle(Feet.of(dist));
     }
 
     public ShooterTableEntry predictedTableEntryHub(double dist) {
-        return ShooterTable.calcShooterTableEntryShooter(Meters.of(dist));
+        return ShooterTable.calcShooterTableEntryShooter(Feet.of(dist));
     }
 
     public Command runShooterTableCommand(ShooterTableEntry entry) {
@@ -115,14 +120,15 @@ public class ShooterSubsystem extends SubsystemBase {
         });
     }
 
-    public Command automaticHubShooter(DoubleSupplier dist, FireType mode) {
+    public Command automaticHubShooter(DoubleSupplier dist, Supplier<FireType> mode) {
         return run(() -> {
-            if (mode == FireType.Assisted || mode == FireType.Manual) {
+            if (mode.get() == FireType.Assisted || mode.get() == FireType.Manual) {
                 setVelocityRPM(3000);
 
-            } else if (mode == FireType.Automatic) {
+            } else if (mode.get() == FireType.Automatic) {
                 ShooterTableEntry entry = predictedTableEntryHub(dist.getAsDouble());
                 setVelocityRPM(entry.wheelSpeed.in(RPM));
+                // SmartDashboard.putNumber("Trying RPM", entry.wheelSpeed.in(RPM));
             }
         });
     }

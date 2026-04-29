@@ -16,8 +16,8 @@ public class Limelight {
     private final NetworkTable m_limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
     private final double[] m_orientationEntries = new double[6];
     private double m_lastOrientationDegrees = Double.NaN;
-    private final double TARGET_OFFSET_INCHES = 23.0; // height of the center of the lens from the floor
-    private static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(19);
+    private final double TARGET_OFFSET_INCHES = 24.0;
+    // private static final double CAMERA_HEIGHT_METERS = Units.inchesToMeters(19);
 
     // angle of camera from vertical
     // positive is pointing down
@@ -151,6 +151,8 @@ public class Limelight {
         double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches)
                 / Math.tan(angleToGoalRadians);
 
+        // -0.2921
+
         // Return inches
         return distanceFromLimelightToGoalInches;
     }
@@ -168,4 +170,5 @@ public class Limelight {
     public Optional<Pose3d> getFiducialPose3d() {
         return m_layout.getTagPose((int) getFiducialID());
     }
+
 }

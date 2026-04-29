@@ -49,7 +49,7 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
-    private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight);
+    private final ShooterSubsystem m_shooter = new ShooterSubsystem(m_limelight, m_robotDrive);
     private final InfeedSubsystem m_infeed = new InfeedSubsystem();
     private final FeederSubsystem m_feeder = new FeederSubsystem();
     private final InfeedArmSubsystem m_infeedArm = new InfeedArmSubsystem();
@@ -113,6 +113,7 @@ public class RobotContainer {
         SmartDashboard.putNumber("Auto Delay", 0.0);
 
         DashboardStore.add("Limelight/Distance", m_limelight::getDistanceToPoint);
+        DashboardStore.add("target distance", () -> m_targetDistance);
 
         DashboardStore.add("Probability/Shot", () -> m_shooter.getShotProbability() * 100.0);
 
@@ -151,9 +152,9 @@ public class RobotContainer {
         // SHOOTER //
         m_driverController.rightTrigger()
                 .whileTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
-                        .alongWith(m_spindexer.spinCommand(SPINDEXER_SPEED))
-                        .alongWith(m_feeder.intakeCommand(FEEDER_SPEED))
-                        .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, getSelectedFireType())));
+                        .alongWith(Commands.waitSeconds(1.0).andThen(m_spindexer.spinCommand(SPINDEXER_SPEED)))
+                        .alongWith(Commands.waitSeconds(1.0).andThen(m_feeder.intakeCommand(FEEDER_SPEED)))
+                        .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, () -> getSelectedFireType())));
 
         // INFEED ARM, MANUAL OVERRIDES //
         // m_driverController.start().whileTrue(m_infeedArm.agitateCommand());
