@@ -35,7 +35,8 @@ public class RobotContainer {
     public enum FireType {
         Manual(0),
         Assisted(1),
-        Automatic(2);
+        Automatic(2),
+        Testing(3);
 
         public int Type;
 
@@ -101,13 +102,14 @@ public class RobotContainer {
                 () -> getXSpeed(),
                 () -> getYSpeed(),
                 () -> getRotationSpeed(),
-                () -> true).beforeStarting(() -> MathUtils.BASE_SPEED = 0.4);
+                () -> true).beforeStarting(() -> MathUtils.BASE_SPEED = 0.3);
     }
 
     public RobotContainer() {
         fireTypeChooser.setDefaultOption("Manual", FireType.Manual);
         fireTypeChooser.addOption("Assisted", FireType.Assisted);
         fireTypeChooser.addOption("Automatic", FireType.Automatic);
+        fireTypeChooser.addOption("Testing", FireType.Testing);
         SmartDashboard.putData("Fire Type", fireTypeChooser);
 
         SmartDashboard.putNumber("Auto Delay", 0.0);
@@ -152,9 +154,12 @@ public class RobotContainer {
         // SHOOTER //
         m_driverController.rightTrigger()
                 .whileTrue(pointAtHubCommand(m_limelight, this::getXSpeed, this::getYSpeed)
-                        .alongWith(Commands.waitSeconds(1.0).andThen(m_spindexer.spinCommand(SPINDEXER_SPEED)))
-                        .alongWith(Commands.waitSeconds(1.0).andThen(m_feeder.intakeCommand(FEEDER_SPEED)))
+                        .alongWith(Commands.waitSeconds(0.1).andThen(m_spindexer.spinCommand(SPINDEXER_SPEED)))
+                        .alongWith(Commands.waitSeconds(0.1).andThen(m_feeder.intakeCommand(FEEDER_SPEED)))
+                        .alongWith(m_infeedArm.agitateCommand())
                         .alongWith(m_shooter.automaticHubShooter(() -> m_targetDistance, () -> getSelectedFireType())));
+
+        // m_driverController.a().whileTrue(m_spindexer.spinCommand(SPINDEXER_SPEED));
 
         // INFEED ARM, MANUAL OVERRIDES //
         // m_driverController.start().whileTrue(m_infeedArm.agitateCommand());

@@ -123,12 +123,14 @@ public class ShooterSubsystem extends SubsystemBase {
     public Command automaticHubShooter(DoubleSupplier dist, Supplier<FireType> mode) {
         return run(() -> {
             if (mode.get() == FireType.Assisted || mode.get() == FireType.Manual) {
-                setVelocityRPM(3000);
+                setVelocityRPM(2800);
 
             } else if (mode.get() == FireType.Automatic) {
                 ShooterTableEntry entry = predictedTableEntryHub(dist.getAsDouble());
                 setVelocityRPM(entry.wheelSpeed.in(RPM));
                 // SmartDashboard.putNumber("Trying RPM", entry.wheelSpeed.in(RPM));
+            } else if (mode.get() == FireType.Testing) {
+                setVelocityRPM(500);
             }
         });
     }
